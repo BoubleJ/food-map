@@ -14,7 +14,6 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema> & { corsOrigins: string[] };
 
-/** 부팅 시점에 환경 변수를 한 번만 검증한다. 빠진 값이 있으면 여기서 죽는다. */
 export function validateEnv(raw: Record<string, unknown>): Env {
   const parsed = envSchema.parse(raw);
   return {

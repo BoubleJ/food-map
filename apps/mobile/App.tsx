@@ -17,7 +17,6 @@ export default function App() {
     const message = parseWebMessage(event.nativeEvent.data);
     if (!message) return;
 
-    // 푸시 · 공유 · 네이티브 소셜 로그인 핸들러는 여기에 이어 붙인다.
     if (message.type === "REQUEST_LOCATION") {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {

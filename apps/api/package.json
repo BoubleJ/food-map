@@ -7,7 +7,7 @@
     "build": "nest build",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "jest --passWithNoTests",
+    "test": "vitest run --passWithNoTests",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -39,20 +39,11 @@
     "@nestjs/testing": "12.1.0",
     "@types/cookie-parser": "1.4.9",
     "@types/express": "5.0.6",
-    "@types/jest": "30.0.0",
     "@types/node": "26.6.2",
     "@types/passport-jwt": "4.0.1",
     "drizzle-kit": "0.31.11",
-    "jest": "30.5.2",
-    "ts-jest": "29.4.13",
     "ts-node": "10.9.2",
-    "typescript": "5.9.3"
-  },
-  "jest": {
-    "moduleFileExtensions": ["js", "json", "ts"],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": { "^.+\\.ts$": "ts-jest" },
-    "testEnvironment": "node"
+    "typescript": "6.0.3",
+    "vitest": "4.1.9"
   }
 }

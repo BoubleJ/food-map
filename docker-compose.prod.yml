@@ -1,6 +1,3 @@
-# VPS 배포: GHCR 에서 이미지를 받아 Caddy 뒤에 올린다.
-# 항상 --env-file 과 함께 띄운다:
-#   docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 services:
   postgres:
     image: postgis/postgis:17-3.5

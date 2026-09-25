@@ -7,3 +7,5 @@ apps/mobile
 .git
 .env
 .env.production
+**/build
+**/.react-router

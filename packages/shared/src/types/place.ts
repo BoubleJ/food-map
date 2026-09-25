@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-/** WGS84 좌표. PostGIS geography(Point, 4326) 와 대응한다. */
 export const coordinateSchema = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
@@ -33,7 +32,6 @@ export const placeSchema = z.object({
 });
 export type Place = z.infer<typeof placeSchema>;
 
-/** 지도 화면의 영역으로 맛집을 조회할 때 쓰는 경계 상자. */
 export const boundsSchema = z.object({
   south: z.number(),
   west: z.number(),

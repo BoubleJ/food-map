@@ -1,7 +1,13 @@
-# {$DOMAIN} 은 .env.production 에서 넘어온다. Caddy 가 인증서를 자동으로 받는다.
 {$DOMAIN} {
 	encode zstd gzip
-	reverse_proxy web:3000
+
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
 }
 
 api.{$DOMAIN} {
@@ -11,8 +17,12 @@ api.{$DOMAIN} {
 
 admin.{$DOMAIN} {
 	encode zstd gzip
-	# 관리자는 Cloudflare Access 또는 아래 IP 제한으로 한 번 더 막는다.
-	# @blocked not remote_ip 1.2.3.4
-	# respond @blocked 403
-	reverse_proxy admin:3001
+
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+
+	handle {
+		reverse_proxy admin:3001
+	}
 }

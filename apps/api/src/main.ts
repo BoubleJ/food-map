@@ -16,7 +16,6 @@ async function bootstrap(): Promise<void> {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.enableShutdownHooks();
 
-  // JWT 를 httpOnly 쿠키로 주고받으므로 credentials 를 열어 둔다.
   app.enableCors({
     origin: config.get<string[]>("corsOrigins") ?? [],
     credentials: true,

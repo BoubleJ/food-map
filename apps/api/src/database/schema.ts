@@ -49,7 +49,6 @@ export const places = pgTable(
     category: placeCategory("category").notNull().default("etc"),
     address: text("address").notNull(),
     roadAddress: text("road_address"),
-    // PostGIS geometry(point, 4326). { x: 경도, y: 위도 } 로 읽고 쓴다.
     location: geometry("location", { type: "point", mode: "xy", srid: 4326 }).notNull(),
     phone: text("phone"),
     thumbnailUrl: text("thumbnail_url"),
@@ -57,7 +56,6 @@ export const places = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    // 지도 영역 조회는 공간 인덱스가 없으면 전부 순차 스캔이 된다.
     index("places_location_idx").using("gist", table.location),
     index("places_name_idx").on(sql`lower(${table.name})`),
   ],

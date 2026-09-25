@@ -1,3 +1,2 @@
--- 좌표 컬럼과 GiST 인덱스에 필요하다.
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
