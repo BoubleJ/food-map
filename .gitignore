@@ -1,0 +1,35 @@
+node_modules/
+.pnpm-store/
+
+# 빌드 산출물
+.next/
+out/
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+
+# 환경 변수
+.env
+.env.local
+.env.production
+.env*.local
+
+# Expo
+.expo/
+.expo-shared/
+apps/mobile/android/
+apps/mobile/ios/
+
+# 로그 / 에디터
+*.log
+npm-debug.log*
+yarn-error.log*
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# 로컬 데이터
+docker/data/

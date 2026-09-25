@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "맛집 지도",
+    "slug": "food-map",
+    "scheme": "foodmap",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.foodmap.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "주변 맛집을 보여주기 위해 위치를 사용합니다."
+      }
+    },
+    "android": {
+      "package": "com.foodmap.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        { "locationWhenInUsePermission": "주변 맛집을 보여주기 위해 위치를 사용합니다." }
+      ]
+    ],
+    "extra": {
+      "webUrl": "http://localhost:3000"
+    }
+  }
+}

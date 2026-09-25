@@ -1,0 +1,68 @@
+# VPS 배포: GHCR 에서 이미지를 받아 Caddy 뒤에 올린다.
+# 항상 --env-file 과 함께 띄운다:
+#   docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    restart: unless-stopped
+    env_file: .env.production
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+
+  api:
+    image: ghcr.io/${GHCR_OWNER}/food-map-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file: .env.production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  web:
+    image: ghcr.io/${GHCR_OWNER}/food-map-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file: .env.production
+    depends_on: [api]
+
+  admin:
+    image: ghcr.io/${GHCR_OWNER}/food-map-admin:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file: .env.production
+    depends_on: [api]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    env_file: .env.production
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [web, admin, api]
+
+volumes:
+  postgres-data:
+  redis-data:
+  caddy-data:
+  caddy-config:
