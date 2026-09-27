@@ -8,8 +8,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "lint": "turbo run lint",
-    "db:up": "docker compose --env-file .env.development -f docker-compose.dev.yml up -d",
-    "db:down": "docker compose --env-file .env.development -f docker-compose.dev.yml down"
+    "db:up": "docker compose --env-file .env.dev -f docker-compose.dev.yml up -d",
+    "db:down": "docker compose --env-file .env.dev -f docker-compose.dev.yml down"
   },
   "pnpm": {
     "onlyBuiltDependencies": ["esbuild", "sharp", "unrs-resolver", "@tailwindcss/oxide"]

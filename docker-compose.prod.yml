@@ -2,7 +2,7 @@ services:
   postgres:
     image: postgis/postgis:17-3.5
     restart: unless-stopped
-    env_file: .env.production
+    env_file: .env.prod
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
@@ -12,17 +12,10 @@ services:
       timeout: 5s
       retries: 10
 
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
-    volumes:
-      - redis-data:/data
-
   api:
     image: ghcr.io/${GHCR_OWNER}/food-map-api:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    env_file: .env.production
+    env_file: .env.prod
     depends_on:
       postgres:
         condition: service_healthy
@@ -35,19 +28,19 @@ services:
   web:
     image: ghcr.io/${GHCR_OWNER}/food-map-web:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    env_file: .env.production
+    env_file: .env.prod
     depends_on: [api]
 
   admin:
     image: ghcr.io/${GHCR_OWNER}/food-map-admin:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    env_file: .env.production
+    env_file: .env.prod
     depends_on: [api]
 
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
-    env_file: .env.production
+    env_file: .env.prod
     ports:
       - "80:80"
       - "443:443"
@@ -60,6 +53,5 @@ services:
 
 volumes:
   postgres-data:
-  redis-data:
   caddy-data:
   caddy-config:

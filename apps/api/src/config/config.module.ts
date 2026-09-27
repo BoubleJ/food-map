@@ -2,13 +2,16 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { validateEnv } from "./env";
 
+const envFileSuffix: Record<string, string> = { development: "dev", production: "prod" };
+const nodeEnv = process.env.NODE_ENV ?? "development";
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
       envFilePath: [
-        `../../.env.${process.env.NODE_ENV ?? "development"}`,
+        `../../.env.${envFileSuffix[nodeEnv] ?? nodeEnv}`,
         "../../.env",
       ],
       validate: validateEnv,
