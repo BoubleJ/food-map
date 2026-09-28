@@ -1,6 +1,12 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["eslint", "typescript", "unicorn", "oxc", "react", "import", "vitest"],
+  "jsPlugins": [
+    {
+      "name": "barrel-files",
+      "specifier": "eslint-plugin-barrel-files"
+    }
+  ],
   "categories": {
     "correctness": "error"
   },
@@ -16,6 +22,13 @@
         "argsIgnorePattern": "^_",
         "varsIgnorePattern": "^_"
       }
-    ]
+    ],
+    "barrel-files/avoid-barrel-files": [
+      "error",
+      {
+        "amountOfExportsToConsiderModuleAsBarrel": 1
+      }
+    ],
+    "barrel-files/avoid-re-export-all": "error"
   }
 }

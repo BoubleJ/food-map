@@ -14,6 +14,7 @@
     "db:down": "docker compose --env-file .env.dev -f docker-compose.dev.yml down"
   },
   "devDependencies": {
+    "eslint-plugin-barrel-files": "3.0.1",
     "lefthook": "2.1.14",
     "oxfmt": "0.70.0",
     "oxlint": "1.85.0",
@@ -22,6 +23,15 @@
   },
   "packageManager": "pnpm@10.11.0",
   "pnpm": {
+    "packageExtensions": {
+      "eslint-plugin-barrel-files": {
+        "peerDependenciesMeta": {
+          "eslint": {
+            "optional": true
+          }
+        }
+      }
+    },
     "onlyBuiltDependencies": [
       "esbuild",
       "sharp",
