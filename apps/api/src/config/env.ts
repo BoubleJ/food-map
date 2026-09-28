@@ -9,9 +9,11 @@ const envSchema = z.object({
   JWT_REFRESH_TTL: z.string().default("30d"),
   COOKIE_DOMAIN: z.string().default("localhost"),
   CORS_ORIGINS: z.string().default(""),
+  KAKAO_REST_API_KEY: z.string().min(1),
+  JUSO_SEARCH_API_KEY: z.string().min(1),
 });
 
-export type Env = z.infer<typeof envSchema> & { corsOrigins: string[] };
+type Env = z.infer<typeof envSchema> & { corsOrigins: string[] };
 
 export function validateEnv(raw: Record<string, unknown>): Env {
   const parsed = envSchema.parse(raw);

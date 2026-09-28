@@ -7,6 +7,9 @@ pre-commit:
     - name: lint
       glob: "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
       run: pnpm exec oxlint --no-error-on-unmatched-pattern {staged_files}
+    - name: api-structure
+      glob: "apps/api/src/**"
+      run: zsh scripts/check-api-structure.sh
 
 pre-push:
   jobs:

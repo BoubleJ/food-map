@@ -11,6 +11,29 @@
       "specifier": "./packages/oxlint-plugin/src/index.ts"
     }
   ],
+  "settings": {
+    "food-map": {
+      "roleFolders": {
+        "types": "type",
+        "utils": "function",
+        "constants": "constant",
+        "dto": "class"
+      },
+      "nestFileKinds": ["module", "controller", "service"],
+      "sharedFolder": "shared",
+      "sharedChildFolders": [
+        "decorators",
+        "filters",
+        "guards",
+        "interceptors",
+        "middleware",
+        "pipes"
+      ],
+      "infraFolders": {
+        "database": ["schema"]
+      }
+    }
+  },
   "categories": {
     "correctness": "error"
   },
@@ -113,6 +136,21 @@
         "react/unsupported-syntax": "error",
         "react/rule-suppression": "error",
         "react/capitalized-calls": "error"
+      }
+    },
+    {
+      "files": ["apps/api/**"],
+      "rules": {
+        "food-map/no-foreign-internal-import": "error",
+        "food-map/no-exported-function-in-nest-file": "error",
+        "unicorn/filename-case": [
+          "error",
+          {
+            "case": "kebabCase"
+          }
+        ],
+        "food-map/export-kind-by-folder": "error",
+        "food-map/nest-file-location": "error"
       }
     }
   ]
