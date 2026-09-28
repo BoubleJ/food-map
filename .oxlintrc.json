@@ -108,7 +108,11 @@
         "typescript/no-inferrable-types": "error",
         "food-map/no-type-prefix": "error",
         "food-map/prefer-props-with-children": "error",
-        "food-map/no-nested-type-literal": "error"
+        "food-map/no-nested-type-literal": "error",
+        "react/rules-of-hooks": "error",
+        "react/unsupported-syntax": "error",
+        "react/rule-suppression": "error",
+        "react/capitalized-calls": "error"
       }
     }
   ]
