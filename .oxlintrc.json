@@ -29,6 +29,25 @@
         "amountOfExportsToConsiderModuleAsBarrel": 1
       }
     ],
-    "barrel-files/avoid-re-export-all": "error"
-  }
+    "barrel-files/avoid-re-export-all": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["./*", "../*", "!./+types/*"],
+            "message": "@/ 절대경로 alias 를 쓴다."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["packages/shared/**"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ]
 }

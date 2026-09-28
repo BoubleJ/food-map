@@ -2,7 +2,7 @@ import { Global, Inject, Module, type OnApplicationShutdown } from "@nestjs/comm
 import { ConfigService } from "@nestjs/config";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import * as schema from "./schema";
+import * as schema from "@/database/schema";
 
 export const DATABASE = Symbol("DATABASE");
 export const DATABASE_CLIENT = Symbol("DATABASE_CLIENT");
