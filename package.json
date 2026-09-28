@@ -14,6 +14,7 @@
     "db:down": "docker compose --env-file .env.dev -f docker-compose.dev.yml down"
   },
   "devDependencies": {
+    "lefthook": "2.1.14",
     "oxfmt": "0.70.0",
     "oxlint": "1.85.0",
     "turbo": "2.11.4",
@@ -25,7 +26,8 @@
       "esbuild",
       "sharp",
       "unrs-resolver",
-      "@tailwindcss/oxide"
+      "@tailwindcss/oxide",
+      "lefthook"
     ]
   }
 }
