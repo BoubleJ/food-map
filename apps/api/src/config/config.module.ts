@@ -10,10 +10,7 @@ const nodeEnv = process.env.NODE_ENV ?? "development";
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
-      envFilePath: [
-        `../../.env.${envFileSuffix[nodeEnv] ?? nodeEnv}`,
-        "../../.env",
-      ],
+      envFilePath: [`../../.env.${envFileSuffix[nodeEnv] ?? nodeEnv}`, "../../.env"],
       validate: validateEnv,
     }),
   ],

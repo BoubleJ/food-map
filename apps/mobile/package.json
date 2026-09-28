@@ -9,8 +9,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "prebuild": "expo prebuild",
-    "typecheck": "tsc --noEmit",
-    "lint": "expo lint"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@food-map/shared": "workspace:*",

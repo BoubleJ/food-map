@@ -1,10 +1,7 @@
 import type { Route } from "./+types/home";
 
 export function meta(_: Route.MetaArgs) {
-  return [
-    { title: "맛집 지도" },
-    { name: "description", content: "지도에서 찾는 맛집" },
-  ];
+  return [{ title: "맛집 지도" }, { name: "description", content: "지도에서 찾는 맛집" }];
 }
 
 export default function Home() {

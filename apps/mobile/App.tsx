@@ -4,7 +4,8 @@ import { StyleSheet } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 
-const WEB_URL = (Constants.expoConfig?.extra?.webUrl as string | undefined) ?? "http://localhost:3000";
+const WEB_URL =
+  (Constants.expoConfig?.extra?.webUrl as string | undefined) ?? "http://localhost:3000";
 
 export default function App() {
   return (
