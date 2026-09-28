@@ -5,6 +5,10 @@
     {
       "name": "barrel-files",
       "specifier": "eslint-plugin-barrel-files"
+    },
+    {
+      "name": "food-map",
+      "specifier": "./packages/oxlint-plugin/src/index.ts"
     }
   ],
   "categories": {
@@ -40,13 +44,71 @@
           }
         ]
       }
-    ]
+    ],
+    "food-map/no-restaurant-value-union": "error"
   },
   "overrides": [
     {
-      "files": ["packages/shared/**"],
+      "files": ["packages/**"],
       "rules": {
         "no-restricted-imports": "off"
+      }
+    },
+    {
+      "files": ["apps/web/**", "apps/admin/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["./*", "../*", "!./+types/*"],
+                "message": "@/ 절대경로 alias 를 쓴다."
+              }
+            ],
+            "paths": [
+              {
+                "name": "react",
+                "importNames": ["default", "memo", "useMemo", "useCallback"],
+                "message": "memo, useMemo, useCallback 을 쓰지 않는다. default import 는 React.useMemo 로 우회할 수 있어 같이 막는다."
+              }
+            ]
+          }
+        ],
+        "prefer-destructuring": [
+          "error",
+          {
+            "VariableDeclarator": {
+              "object": true,
+              "array": false
+            },
+            "AssignmentExpression": {
+              "object": false,
+              "array": false
+            }
+          }
+        ],
+        "react/function-component-definition": [
+          "error",
+          {
+            "namedComponents": "function-declaration",
+            "unnamedComponents": "arrow-function"
+          }
+        ],
+        "react/jsx-handler-names": [
+          "error",
+          {
+            "eventHandlerPrefix": "handle",
+            "eventHandlerPropPrefix": "on",
+            "checkLocalVariables": true,
+            "checkInlineFunction": false
+          }
+        ],
+        "typescript/consistent-type-definitions": ["error", "interface"],
+        "typescript/no-inferrable-types": "error",
+        "food-map/no-type-prefix": "error",
+        "food-map/prefer-props-with-children": "error",
+        "food-map/no-nested-type-literal": "error"
       }
     }
   ]

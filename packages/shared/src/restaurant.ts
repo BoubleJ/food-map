@@ -13,3 +13,7 @@ export const RESTAURANT_CUISINES = [
   "indian",
   "other",
 ] as const;
+
+export type RestaurantCategory = (typeof RESTAURANT_CATEGORIES)[number];
+
+export type RestaurantCuisine = (typeof RESTAURANT_CUISINES)[number];

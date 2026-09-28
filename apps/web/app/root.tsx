@@ -7,10 +7,11 @@ import {
   ScrollRestoration,
 } from "react-router";
 
+import type { PropsWithChildren } from "react";
 import type { Route } from "./+types/root";
 import "@/app.css";
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout({ children }: PropsWithChildren) {
   return (
     <html lang="ko">
       <head>
