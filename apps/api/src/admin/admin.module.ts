@@ -1,0 +1,27 @@
+import { Module } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { HttpClientModule } from "@nestjs/http-client";
+import { AddressSearchController } from "@/admin/address-search/address-search.controller";
+import { AddressSearchService, JUSO_CLIENT } from "@/admin/address-search/address-search.service";
+import { PlaceSearchController } from "@/admin/place-search/place-search.controller";
+import { KAKAO_LOCAL_CLIENT, PlaceSearchService } from "@/admin/place-search/place-search.service";
+
+@Module({
+  imports: [
+    HttpClientModule.registerAsync({
+      name: KAKAO_LOCAL_CLIENT,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        baseUrl: "https://dapi.kakao.com",
+        headers: { authorization: `KakaoAK ${config.getOrThrow<string>("KAKAO_REST_API_KEY")}` },
+      }),
+    }),
+    HttpClientModule.register({
+      name: JUSO_CLIENT,
+      baseUrl: "https://business.juso.go.kr",
+    }),
+  ],
+  controllers: [AddressSearchController, PlaceSearchController],
+  providers: [AddressSearchService, PlaceSearchService],
+})
+export class AdminModule {}
