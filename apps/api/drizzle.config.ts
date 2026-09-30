@@ -1,4 +1,12 @@
+import { existsSync } from "node:fs";
 import { defineConfig } from "drizzle-kit";
+
+const envFileSuffix: Record<string, string> = { development: "dev", production: "prod" };
+const nodeEnv = process.env.NODE_ENV ?? "development";
+
+for (const envFile of ["../../.env", `../../.env.${envFileSuffix[nodeEnv] ?? nodeEnv}`]) {
+  if (existsSync(envFile)) process.loadEnvFile(envFile);
+}
 
 export default defineConfig({
   schema: "./src/database/schema/*.ts",
