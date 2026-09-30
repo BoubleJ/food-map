@@ -14,12 +14,12 @@
     "db:down": "docker compose --env-file .env.dev -f docker-compose.dev.yml down"
   },
   "devDependencies": {
-    "eslint-plugin-barrel-files": "3.0.1",
-    "lefthook": "2.1.14",
-    "oxfmt": "0.70.0",
+    "eslint-plugin-barrel-files": "^3.0.1",
+    "lefthook": "^2.1.14",
+    "oxfmt": "^0.70.0",
     "oxlint": "1.85.0",
-    "turbo": "2.11.4",
-    "typescript": "6.0.3"
+    "turbo": "^2.11.4",
+    "typescript": "^6.0.3"
   },
   "packageManager": "pnpm@10.11.0",
   "pnpm": {
