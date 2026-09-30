@@ -2,7 +2,7 @@ services:
   postgres:
     image: postgis/postgis:17-3.5
     restart: unless-stopped
-    env_file: .env.prod
+    env_file: .env.${APP_ENV:?APP_ENV 가 필요하다}
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
@@ -17,7 +17,7 @@ services:
   api:
     image: ghcr.io/${GHCR_OWNER}/food-map-api:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    env_file: .env.prod
+    env_file: .env.${APP_ENV:?APP_ENV 가 필요하다}
     depends_on:
       postgres:
         condition: service_healthy
@@ -36,19 +36,19 @@ services:
   web:
     image: ghcr.io/${GHCR_OWNER}/food-map-web:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    env_file: .env.prod
+    env_file: .env.${APP_ENV:?APP_ENV 가 필요하다}
     depends_on: [api]
 
   admin:
     image: ghcr.io/${GHCR_OWNER}/food-map-admin:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    env_file: .env.prod
+    env_file: .env.${APP_ENV:?APP_ENV 가 필요하다}
     depends_on: [api]
 
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
-    env_file: .env.prod
+    env_file: .env.${APP_ENV:?APP_ENV 가 필요하다}
     ports:
       - "80:80"
       - "443:443"

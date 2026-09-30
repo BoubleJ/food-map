@@ -1,19 +1,15 @@
 import { existsSync } from "node:fs";
 import { defineConfig } from "drizzle-kit";
 
-const envFileSuffix: Record<string, string> = { development: "dev", production: "prod" };
-const nodeEnv = process.env.NODE_ENV ?? "development";
+if (existsSync("../../.env.local")) process.loadEnvFile("../../.env.local");
 
-for (const envFile of ["../../.env", `../../.env.${envFileSuffix[nodeEnv] ?? nodeEnv}`]) {
-  if (existsSync(envFile)) process.loadEnvFile(envFile);
-}
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) throw new Error("DATABASE_URL 이 없다. 루트 .env.local 을 확인한다");
 
 export default defineConfig({
   schema: "./src/database/schema/*.ts",
   out: "./drizzle",
   dialect: "postgresql",
-  dbCredentials: {
-    url: process.env.DATABASE_URL ?? "postgres://foodmap:foodmap@localhost:5432/foodmap",
-  },
+  dbCredentials: { url: databaseUrl },
   extensionsFilters: ["postgis"],
 });

@@ -9,9 +9,7 @@
     "lint": "oxlint && zsh scripts/check-api-structure.sh",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
-    "format:check": "oxfmt --check",
-    "db:up": "docker compose --env-file .env.dev -f docker-compose.dev.yml up -d",
-    "db:down": "docker compose --env-file .env.dev -f docker-compose.dev.yml down"
+    "format:check": "oxfmt --check"
   },
   "devDependencies": {
     "eslint-plugin-barrel-files": "^3.0.1",

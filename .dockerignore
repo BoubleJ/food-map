@@ -6,6 +6,8 @@
 apps/mobile
 .git
 .env
+.env.local
+.env.dev
 .env.prod
 **/build
 **/.react-router
