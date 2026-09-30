@@ -11,6 +11,7 @@ const envSchema = z.object({
   CORS_ORIGINS: z.string().default(""),
   KAKAO_REST_API_KEY: z.string().min(1),
   JUSO_SEARCH_API_KEY: z.string().min(1),
+  JUSO_COORD_API_KEY: z.string().min(1),
 });
 
 type Env = z.infer<typeof envSchema> & { corsOrigins: string[] };

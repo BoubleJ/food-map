@@ -1,4 +1,4 @@
-import { BadGatewayException, BadRequestException } from "@nestjs/common";
+import { BadGatewayException, BadRequestException, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { getHttpClientToken } from "@nestjs/http-client";
 import { Test } from "@nestjs/testing";
@@ -28,6 +28,18 @@ function createJusoResult(overrides: Record<string, string>) {
   };
   return { data: { results: { common: { errorCode: "0", errorMessage: "정상" }, juso: [juso] } } };
 }
+
+function createCoordinateResponse(juso: { entX: string; entY: string }[]) {
+  return { data: { results: { common: { errorCode: "0", errorMessage: "정상" }, juso } } };
+}
+
+const coordinateQuery = {
+  admCd: "4113510700",
+  rnMgtSn: "411353180041",
+  udrtYn: "0",
+  buldMnnm: "72",
+  buldSlno: "0",
+};
 
 describe("AddressSearchService", () => {
   const get = vi.fn<(url: string, options?: object) => Promise<unknown>>();
@@ -106,4 +118,29 @@ describe("AddressSearchService", () => {
       await expect(service.search("야탑로 72")).rejects.toBeInstanceOf(BadGatewayException);
     },
   );
+
+  it("좌표제공 API 의 UTM-K 좌표를 WGS84 경도와 위도로 바꿔 돌려준다", async () => {
+    get.mockResolvedValue(
+      createCoordinateResponse([{ entX: "966975.1231662666", entY: "1934560.2263797005" }]),
+    );
+
+    const { longitude, latitude } = await service.findCoordinate(coordinateQuery);
+
+    expect(longitude).toBeCloseTo(127.126824, 6);
+    expect(latitude).toBeCloseTo(37.409579, 6);
+  });
+
+  it("좌표 결과가 없으면 404 로 바꾼다", async () => {
+    get.mockResolvedValue(createCoordinateResponse([]));
+
+    await expect(service.findCoordinate(coordinateQuery)).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it("좌표제공 API 서비스 문제 코드는 좌표 조회 실패 문구와 함께 502 로 바꾼다", async () => {
+    get.mockResolvedValue(createJusoResponse("E0001", "승인되지 않은 KEY 입니다."));
+
+    await expect(service.findCoordinate(coordinateQuery)).rejects.toThrow(
+      new BadGatewayException("주소 좌표 조회에 실패했습니다."),
+    );
+  });
 });

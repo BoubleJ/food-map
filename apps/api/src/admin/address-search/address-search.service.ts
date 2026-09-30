@@ -1,6 +1,14 @@
-import { BadGatewayException, BadRequestException, HttpStatus, Injectable } from "@nestjs/common";
+import {
+  BadGatewayException,
+  BadRequestException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { HttpClient, InjectHttpClient, toHttpException } from "@nestjs/http-client";
+import proj4 from "proj4";
+import { AddressCoordinateQuery } from "@/admin/dto/address-coordinate.query";
 
 interface JusoSearchItem {
   roadAddrPart1: string;
@@ -16,21 +24,13 @@ interface JusoSearchItem {
   buldSlno: string;
 }
 
-interface JusoCoordinateQuery {
-  admCd: string;
-  rnMgtSn: string;
-  udrtYn: string;
-  buldMnnm: string;
-  buldSlno: string;
-}
-
 interface AddressSearchResult {
   roadAddress: string;
   jibunAddress: string;
   regionSido: string;
   regionSigungu: string | null;
   regionEupmyeondong: string;
-  coordinateQuery: JusoCoordinateQuery;
+  coordinateQuery: AddressCoordinateQuery;
 }
 
 interface JusoSearchStatus {
@@ -38,11 +38,21 @@ interface JusoSearchStatus {
   errorMessage: string;
 }
 
-interface JusoSearchResponse {
+interface JusoResponse<T> {
   results: {
     common: JusoSearchStatus;
-    juso: JusoSearchItem[] | null;
+    juso: T[] | null;
   };
+}
+
+interface JusoCoordinateItem {
+  entX: string;
+  entY: string;
+}
+
+interface AddressCoordinate {
+  longitude: number;
+  latitude: number;
 }
 
 export const JUSO_CLIENT = "juso";
@@ -50,6 +60,10 @@ export const JUSO_CLIENT = "juso";
 type JusoErrorStatus = HttpStatus.BAD_REQUEST | HttpStatus.BAD_GATEWAY;
 
 const JUSO_SUCCESS_CODE = "0";
+
+// 좌표제공 API 는 UTM-K(EPSG:5179) 좌표를 돌려준다. restaurants.location 은 WGS84(EPSG:4326) 로 저장한다
+const UTM_K =
+  "+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs";
 
 const JUSO_ERROR_STATUS: Record<string, JusoErrorStatus> = {
   "-999": HttpStatus.BAD_GATEWAY,
@@ -66,11 +80,14 @@ const JUSO_ERROR_STATUS: Record<string, JusoErrorStatus> = {
   E0015: HttpStatus.BAD_REQUEST,
 };
 
-function createJusoException({ errorCode, errorMessage }: JusoSearchStatus) {
+function createJusoException(
+  { errorCode, errorMessage }: JusoSearchStatus,
+  failureMessage: string,
+) {
   const status = JUSO_ERROR_STATUS[errorCode] ?? HttpStatus.BAD_GATEWAY;
   return status === HttpStatus.BAD_REQUEST
     ? new BadRequestException(errorMessage)
-    : new BadGatewayException("주소 검색에 실패했습니다.");
+    : new BadGatewayException(failureMessage);
 }
 
 function removeBuildingName(jibunAddress: string, buildingName: string) {
@@ -88,13 +105,18 @@ export class AddressSearchService {
   ) {}
 
   async search(keyword: string): Promise<AddressSearchResult[]> {
-    const {
-      results: { common, juso },
-    } = await this.requestSearch(keyword);
+    const juso = await this.request<JusoSearchItem>(
+      "/addrlink/addrLinkApi.do",
+      {
+        confmKey: this.config.getOrThrow<string>("JUSO_SEARCH_API_KEY"),
+        keyword,
+        currentPage: 1,
+        countPerPage: 20,
+      },
+      "주소 검색에 실패했습니다.",
+    );
 
-    if (common.errorCode !== JUSO_SUCCESS_CODE) throw createJusoException(common);
-
-    return (juso ?? []).map(
+    return juso.map(
       ({
         roadAddrPart1,
         jibunAddr,
@@ -118,20 +140,37 @@ export class AddressSearchService {
     );
   }
 
-  private async requestSearch(keyword: string) {
+  async findCoordinate(query: AddressCoordinateQuery): Promise<AddressCoordinate> {
+    const [coordinate] = await this.request<JusoCoordinateItem>(
+      "/addrlink/addrCoordApi.do",
+      { confmKey: this.config.getOrThrow<string>("JUSO_COORD_API_KEY"), ...query },
+      "주소 좌표 조회에 실패했습니다.",
+    );
+    if (!coordinate) throw new NotFoundException("주소의 좌표를 찾을 수 없습니다.");
+
+    const [longitude, latitude] = proj4(UTM_K, "WGS84", [
+      Number(coordinate.entX),
+      Number(coordinate.entY),
+    ]);
+    return { longitude, latitude };
+  }
+
+  private async request<T>(
+    path: string,
+    query: Record<string, string | number>,
+    failureMessage: string,
+  ) {
+    let data: JusoResponse<T>;
     try {
-      const { data } = await this.juso.get<JusoSearchResponse>("/addrlink/addrLinkApi.do", {
-        query: {
-          confmKey: this.config.getOrThrow<string>("JUSO_SEARCH_API_KEY"),
-          keyword,
-          currentPage: 1,
-          countPerPage: 20,
-          resultType: "json",
-        },
-      });
-      return data;
+      ({ data } = await this.juso.get<JusoResponse<T>>(path, {
+        query: { ...query, resultType: "json" },
+      }));
     } catch (error) {
       throw toHttpException(error);
     }
+
+    const { common, juso } = data.results;
+    if (common.errorCode !== JUSO_SUCCESS_CODE) throw createJusoException(common, failureMessage);
+    return juso ?? [];
   }
 }
