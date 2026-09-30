@@ -24,6 +24,7 @@ RUN addgroup -g 1001 -S nodejs && adduser -u 1001 -S nestjs -G nodejs
 COPY --from=builder --chown=nestjs:nodejs /repo/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /repo/packages/shared ./packages/shared
 COPY --from=builder --chown=nestjs:nodejs /repo/apps/api/package.json ./apps/api/
+COPY --from=builder --chown=nestjs:nodejs /repo/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder --chown=nestjs:nodejs /repo/apps/api/dist ./apps/api/dist
 USER nestjs
 EXPOSE 4000

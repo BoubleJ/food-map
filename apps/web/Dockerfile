@@ -24,8 +24,9 @@ RUN addgroup -g 1001 -S nodejs && adduser -u 1001 -S web -G nodejs
 COPY --from=builder --chown=web:nodejs /repo/node_modules ./node_modules
 COPY --from=builder --chown=web:nodejs /repo/packages/shared ./packages/shared
 COPY --from=builder --chown=web:nodejs /repo/apps/web/package.json ./apps/web/
+COPY --from=builder --chown=web:nodejs /repo/apps/web/node_modules ./apps/web/node_modules
 COPY --from=builder --chown=web:nodejs /repo/apps/web/build ./apps/web/build
 USER web
 EXPOSE 3000
 WORKDIR /app/apps/web
-CMD ["node", "../../node_modules/@react-router/serve/bin.cjs", "./build/server/index.js"]
+CMD ["node", "node_modules/@react-router/serve/bin.cjs", "./build/server/index.js"]
