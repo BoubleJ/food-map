@@ -46,6 +46,9 @@ importers:
       '@tanstack/react-router':
         specifier: ^1.170.39
         version: 1.170.39(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      ky:
+        specifier: ^2.1.0
+        version: 2.1.0
       react:
         specifier: ^19.2.3
         version: 19.2.3
@@ -3953,6 +3956,10 @@ packages:
   kleur@3.0.3:
     resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
     engines: {node: '>=6'}
+
+  ky@2.1.0:
+    resolution: {integrity: sha512-nIKwelw+7qVqKOlX4Eht6GXfEXlDHcdIjyLWV3s119kYt5s+70ayTnYS+0fRNmtgGRRAfqdeWQbh8YizqkS0ng==}
+    engines: {node: '>=22'}
 
   lan-network@0.2.1:
     resolution: {integrity: sha512-ONPnazC96VKDntab9j9JKwIWhZ4ZUceB4A9Epu4Ssg0hYFmtHZSeQ+n15nIwTFmcBUKtExOer8WTJ4GF9MO64A==}
@@ -8958,6 +8965,8 @@ snapshots:
   jsonc-parser@3.3.1: {}
 
   kleur@3.0.3: {}
+
+  ky@2.1.0: {}
 
   lan-network@0.2.1: {}
 
