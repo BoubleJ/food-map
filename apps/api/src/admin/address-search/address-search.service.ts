@@ -8,7 +8,6 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { HttpClient, InjectHttpClient, toHttpException } from "@nestjs/http-client";
 import proj4 from "proj4";
-import { AddressCoordinateQuery } from "@/admin/dto/address-coordinate.query";
 import type { Env } from "@/_common/types/env";
 
 interface JusoSearchItem {
@@ -25,13 +24,21 @@ interface JusoSearchItem {
   buldSlno: string;
 }
 
+interface JusoCoordinateQuery {
+  admCd: string;
+  rnMgtSn: string;
+  udrtYn: string;
+  buldMnnm: string;
+  buldSlno: string;
+}
+
 interface AddressSearchResult {
   roadAddress: string;
   jibunAddress: string;
   regionSido: string;
   regionSigungu: string | null;
   regionEupmyeondong: string;
-  coordinateQuery: AddressCoordinateQuery;
+  coordinateQuery: JusoCoordinateQuery;
 }
 
 interface JusoSearchStatus {
@@ -141,7 +148,7 @@ export class AddressSearchService {
     );
   }
 
-  async findCoordinate(query: AddressCoordinateQuery): Promise<AddressCoordinate> {
+  async findCoordinate(query: JusoCoordinateQuery): Promise<AddressCoordinate> {
     const [coordinate] = await this.request<JusoCoordinateItem>(
       "/addrlink/addrCoordApi.do",
       { confmKey: this.config.get("JUSO_COORD_API_KEY", { infer: true }), ...query },

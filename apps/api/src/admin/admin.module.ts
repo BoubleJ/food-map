@@ -3,8 +3,9 @@ import { ConfigService } from "@nestjs/config";
 import { HttpClientModule } from "@nestjs/http-client";
 import { AddressSearchController } from "@/admin/address-search/address-search.controller";
 import { AddressSearchService, JUSO_CLIENT } from "@/admin/address-search/address-search.service";
-import { PlaceSearchController } from "@/admin/place-search/place-search.controller";
 import { KAKAO_LOCAL_CLIENT, PlaceSearchService } from "@/admin/place-search/place-search.service";
+import { RestaurantSearchController } from "@/admin/restaurant-search/restaurant-search.controller";
+import { RestaurantSearchService } from "@/admin/restaurant-search/restaurant-search.service";
 import type { Env } from "@/_common/types/env";
 
 @Module({
@@ -22,7 +23,7 @@ import type { Env } from "@/_common/types/env";
       baseUrl: "https://business.juso.go.kr",
     }),
   ],
-  controllers: [AddressSearchController, PlaceSearchController],
-  providers: [AddressSearchService, PlaceSearchService],
+  controllers: [AddressSearchController, RestaurantSearchController],
+  providers: [AddressSearchService, PlaceSearchService, RestaurantSearchService],
 })
 export class AdminModule {}
