@@ -35,6 +35,7 @@ export const restaurants = pgTable(
     location: geometry("location", { type: "point", mode: "xy", srid: 4326 }).notNull(),
     thumbnailUrl: text("thumbnail_url"),
     kakaoPlaceId: text("kakao_place_id").unique(),
+    kakaoPlaceUrl: text("kakao_place_url"),
     isInBusiness: boolean("is_in_business").notNull().default(true),
     isVisible: boolean("is_visible").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

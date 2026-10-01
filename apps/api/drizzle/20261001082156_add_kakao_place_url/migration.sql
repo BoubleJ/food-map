@@ -1,0 +1,1 @@
+ALTER TABLE "restaurants" ADD COLUMN "kakao_place_url" text;
