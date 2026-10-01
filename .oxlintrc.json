@@ -20,7 +20,7 @@
         "dto": "class"
       },
       "nestFileKinds": ["module", "controller", "service"],
-      "sharedFolder": "shared",
+      "sharedFolder": "_common",
       "sharedChildFolders": [
         "decorators",
         "filters",

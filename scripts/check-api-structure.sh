@@ -53,7 +53,7 @@ is_allowed_location() {
 not_kebab_case=()
 misplaced=()
 for folder in $src/**/*(/N); do
-  [[ ${folder:t} =~ '^[a-z0-9]+(-[a-z0-9]+)*$' ]] || not_kebab_case+=($folder)
+  [[ $folder == $src/$shared_folder || ${folder:t} =~ '^[a-z0-9]+(-[a-z0-9]+)*$' ]] || not_kebab_case+=($folder)
   is_allowed_location $folder || misplaced+=($folder)
 done
 

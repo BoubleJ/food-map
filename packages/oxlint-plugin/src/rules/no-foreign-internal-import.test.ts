@@ -19,7 +19,7 @@ ruleTester.run("no-foreign-internal-import", noForeignInternalImport, {
       filename: "/repo/apps/api/src/admin/place-search/place-search.controller.ts",
     },
     {
-      code: 'import { formatDate } from "@/shared/utils/format-date";',
+      code: 'import { formatDate } from "@/_common/utils/format-date";',
       filename: "/repo/apps/api/src/admin/place-search/place-search.service.ts",
     },
     {

@@ -51,7 +51,7 @@ describe("AddressSearchService", () => {
       providers: [
         AddressSearchService,
         { provide: getHttpClientToken(JUSO_CLIENT), useValue: { get } },
-        { provide: ConfigService, useValue: { getOrThrow: () => "test-key" } },
+        { provide: ConfigService, useValue: { get: () => "test-key" } },
       ],
     }).compile();
     service = moduleRef.get(AddressSearchService);

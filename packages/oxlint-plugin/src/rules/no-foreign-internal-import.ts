@@ -6,7 +6,7 @@ export const noForeignInternalImport = defineRule({
     type: "problem",
     messages: {
       foreign:
-        "{{owner}}/{{kind}} 는 {{owner}} 안에서만 import 한다. 여러 기능이 쓰면 shared/{{kind}} 로 옮긴다.",
+        "{{owner}}/{{kind}} 는 {{owner}} 안에서만 import 한다. 여러 기능이 쓰면 {{sharedFolder}}/{{kind}} 로 옮긴다.",
     },
   },
   create(context) {
@@ -20,7 +20,11 @@ export const noForeignInternalImport = defineRule({
         const [, owner = "", kind = ""] = match;
         if (owner === sharedFolder || owner.startsWith(`${sharedFolder}/`)) return;
         if (!context.filename.includes(`/src/${owner}/`)) {
-          context.report({ node: source, messageId: "foreign", data: { owner, kind } });
+          context.report({
+            node: source,
+            messageId: "foreign",
+            data: { owner, kind, sharedFolder },
+          });
         }
       },
     };

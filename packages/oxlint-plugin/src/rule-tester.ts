@@ -8,7 +8,7 @@ const TEST_SETTINGS = {
   "food-map": {
     roleFolders: { types: "type", utils: "function", constants: "constant", dto: "class" },
     nestFileKinds: ["module", "controller", "service"],
-    sharedFolder: "shared",
+    sharedFolder: "_common",
     sharedChildFolders: ["decorators", "filters", "guards", "interceptors", "middleware", "pipes"],
     infraFolders: { database: ["schema"] },
   },

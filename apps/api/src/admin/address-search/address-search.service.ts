@@ -9,6 +9,7 @@ import { ConfigService } from "@nestjs/config";
 import { HttpClient, InjectHttpClient, toHttpException } from "@nestjs/http-client";
 import proj4 from "proj4";
 import { AddressCoordinateQuery } from "@/admin/dto/address-coordinate.query";
+import type { Env } from "@/_common/types/env";
 
 interface JusoSearchItem {
   roadAddrPart1: string;
@@ -101,14 +102,14 @@ function removeBuildingName(jibunAddress: string, buildingName: string) {
 export class AddressSearchService {
   constructor(
     @InjectHttpClient(JUSO_CLIENT) private readonly juso: HttpClient,
-    private readonly config: ConfigService,
+    private readonly config: ConfigService<Env, true>,
   ) {}
 
   async search(keyword: string): Promise<AddressSearchResult[]> {
     const juso = await this.request<JusoSearchItem>(
       "/addrlink/addrLinkApi.do",
       {
-        confmKey: this.config.getOrThrow<string>("JUSO_SEARCH_API_KEY"),
+        confmKey: this.config.get("JUSO_SEARCH_API_KEY", { infer: true }),
         keyword,
         currentPage: 1,
         countPerPage: 20,
@@ -143,7 +144,7 @@ export class AddressSearchService {
   async findCoordinate(query: AddressCoordinateQuery): Promise<AddressCoordinate> {
     const [coordinate] = await this.request<JusoCoordinateItem>(
       "/addrlink/addrCoordApi.do",
-      { confmKey: this.config.getOrThrow<string>("JUSO_COORD_API_KEY"), ...query },
+      { confmKey: this.config.get("JUSO_COORD_API_KEY", { infer: true }), ...query },
       "주소 좌표 조회에 실패했습니다.",
     );
     if (!coordinate) throw new NotFoundException("주소의 좌표를 찾을 수 없습니다.");

@@ -4,6 +4,7 @@ import { DrizzleModule } from "@nestjs/drizzle";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { AdminModule } from "@/admin/admin.module";
 import { AppConfigModule } from "@/config/config.module";
+import type { Env } from "@/_common/types/env";
 import { HealthController } from "@/health/health.controller";
 
 @Module({
@@ -12,9 +13,9 @@ import { HealthController } from "@/health/health.controller";
     AdminModule,
     DrizzleModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
+      useFactory: (config: ConfigService<Env, true>) => ({
         drizzle,
-        connection: { url: config.getOrThrow<string>("DATABASE_URL"), max: 10 },
+        connection: { url: config.get("DATABASE_URL", { infer: true }), max: 10 },
       }),
     }),
   ],

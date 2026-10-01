@@ -5,15 +5,16 @@ import { AddressSearchController } from "@/admin/address-search/address-search.c
 import { AddressSearchService, JUSO_CLIENT } from "@/admin/address-search/address-search.service";
 import { PlaceSearchController } from "@/admin/place-search/place-search.controller";
 import { KAKAO_LOCAL_CLIENT, PlaceSearchService } from "@/admin/place-search/place-search.service";
+import type { Env } from "@/_common/types/env";
 
 @Module({
   imports: [
     HttpClientModule.registerAsync({
       name: KAKAO_LOCAL_CLIENT,
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
+      useFactory: (config: ConfigService<Env, true>) => ({
         baseUrl: "https://dapi.kakao.com",
-        headers: { authorization: `KakaoAK ${config.getOrThrow<string>("KAKAO_REST_API_KEY")}` },
+        headers: { authorization: `KakaoAK ${config.get("KAKAO_REST_API_KEY", { infer: true })}` },
       }),
     }),
     HttpClientModule.register({
