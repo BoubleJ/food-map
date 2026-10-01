@@ -1,7 +1,7 @@
 ---
 name: admin
 description: >
-  apps/admin(Vite SPA, TanStack Router 파일 기반 라우팅, TanStack Query, Tailwind CSS v4) 의 라우트, 컴포넌트, 훅 코드를 작성하거나 수정, 리뷰, 리팩토링할 때 적용하는 규칙.
+  apps/admin(Vite SPA, TanStack Router 파일 기반 라우팅, TanStack Query, Mantine) 의 라우트, 컴포넌트, 훅 코드를 작성하거나 수정, 리뷰, 리팩토링할 때 적용하는 규칙.
   apps/admin/src 아래의 .tsx, .ts 파일과 관련 테스트 코드를 다룰 때 사용한다.
 ---
 

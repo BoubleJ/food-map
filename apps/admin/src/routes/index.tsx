@@ -1,3 +1,4 @@
+import { Center, Stack, Text, Title } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
@@ -6,9 +7,13 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-2">
-      <h1 className="text-2xl font-semibold">맛집 지도 관리자</h1>
-      <p className="text-sm opacity-60">admin · Vite + TanStack Router 세팅 완료</p>
-    </main>
+    <Center mih="100dvh">
+      <Stack align="center" gap="xs">
+        <Title order={2}>맛집 지도 관리자</Title>
+        <Text size="sm" c="dimmed">
+          admin · Vite + TanStack Router + Mantine 세팅 완료
+        </Text>
+      </Stack>
+    </Center>
   );
 }

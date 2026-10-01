@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@food-map/shared": "workspace:*",
+    "@mantine/core": "^9.6.3",
+    "@mantine/hooks": "^9.6.3",
     "@tanstack/react-query": "^5.103.2",
     "@tanstack/react-router": "^1.170.39",
     "react": "^19.2.3",
@@ -19,7 +21,6 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-router-devtools": "^1.167.2",
     "@tanstack/router-plugin": "^1.168.40",
     "@types/node": "^26.6.2",
@@ -27,7 +28,9 @@
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "oxc-transform-react": "^0.145.0",
-    "tailwindcss": "^4.3.3",
+    "postcss": "^8.5.28",
+    "postcss-preset-mantine": "^1.18.0",
+    "postcss-simple-vars": "^7.0.1",
     "typescript": "^6.0.3",
     "vite": "^8.3.1",
     "vitest": "^4.1.9"
