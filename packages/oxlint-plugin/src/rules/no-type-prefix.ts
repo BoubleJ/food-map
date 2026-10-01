@@ -6,7 +6,7 @@ export const noTypePrefix = defineRule({
   meta: {
     type: "suggestion",
     messages: {
-      prefixed: "타입 이름에 I, T 접두사를 붙이지 않는다: {{name}}",
+      prefixed: "타입 이름에 I, T 접두사를 붙이지 말아주세요: {{name}}",
     },
   },
   create(context) {

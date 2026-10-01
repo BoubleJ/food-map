@@ -58,12 +58,12 @@ for folder in $src/**/*(/N); do
 done
 
 if (( ${#not_kebab_case} )); then
-  print -r -- "폴더 이름은 kebab-case 로 짓는다."
+  print -r -- "폴더 이름은 kebab-case 로 지어주세요."
   print -rl -- ${not_kebab_case/#/  }
 fi
 
 if (( ${#misplaced} )); then
-  print -r -- "apps/api/src 폴더 구조 규칙에 맞지 않는 폴더가 있다."
+  print -r -- "apps/api/src 폴더 구조 규칙에 맞지 않는 폴더가 있습니다."
   print -rl -- ${misplaced/#/  }
   print -r -- ""
   print -r -- "허용하는 폴더:"

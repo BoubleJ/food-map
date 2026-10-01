@@ -11,7 +11,8 @@ export const preferPropsWithChildren = defineRule({
   meta: {
     type: "suggestion",
     messages: {
-      childrenProp: "children: ReactNode 를 직접 선언하지 말고 PropsWithChildren<Props> 를 쓴다.",
+      childrenProp:
+        "children: ReactNode 를 직접 선언하지 말고 PropsWithChildren<Props> 를 써주세요.",
     },
   },
   create(context) {

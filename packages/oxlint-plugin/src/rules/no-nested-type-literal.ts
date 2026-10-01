@@ -15,7 +15,7 @@ export const noNestedTypeLiteral = defineRule({
   meta: {
     type: "suggestion",
     messages: {
-      nested: "속성 안에 객체 타입을 직접 쓰지 말고 이름 있는 타입으로 분리한다.",
+      nested: "속성 안에 객체 타입을 직접 쓰지 말고 이름 있는 타입으로 분리해주세요.",
     },
   },
   create(context) {

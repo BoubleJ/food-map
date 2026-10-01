@@ -11,7 +11,7 @@
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "db:tunnel": "nc -z 127.0.0.1 15432 || ssh -f -N -M -S ~/.ssh/foodmap-dev.sock -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 foodmap-dev",
-    "db:tunnel:close": "ssh -S ~/.ssh/foodmap-dev.sock -O exit foodmap-dev 2>/dev/null || echo 'pnpm db:tunnel 로 연 터널이 없다'",
+    "db:tunnel:close": "ssh -S ~/.ssh/foodmap-dev.sock -O exit foodmap-dev 2>/dev/null || echo 'pnpm db:tunnel 로 연 터널이 없습니다.'",
     "api:dev": "pnpm db:tunnel && pnpm --filter @food-map/api dev"
   },
   "devDependencies": {

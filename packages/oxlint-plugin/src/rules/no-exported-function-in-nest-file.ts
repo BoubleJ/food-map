@@ -16,7 +16,7 @@ export const noExportedFunctionInNestFile = defineRule({
     type: "suggestion",
     messages: {
       exported:
-        "service, controller, module 파일에서 함수를 export 하지 않는다. 다른 파일에서 쓰는 함수는 utils/ 로 옮긴다.",
+        "service, controller, module 파일에서는 함수를 export 하지 말아주세요. 다른 파일에서 쓰는 함수는 utils/ 로 옮겨주세요.",
     },
   },
   create(context) {

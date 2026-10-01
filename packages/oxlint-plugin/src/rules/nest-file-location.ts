@@ -6,7 +6,7 @@ export const nestFileLocation = defineRule({
     type: "suggestion",
     messages: {
       misplaced:
-        "service, controller, module 파일은 {{folder}}/ 가 아니라 기능 폴더 바로 아래에 둔다.",
+        "service, controller, module 파일은 {{folder}}/ 가 아니라 기능 폴더 바로 아래에 둬주세요.",
     },
   },
   create(context) {

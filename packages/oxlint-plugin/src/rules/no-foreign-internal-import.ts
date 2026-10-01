@@ -6,7 +6,7 @@ export const noForeignInternalImport = defineRule({
     type: "problem",
     messages: {
       foreign:
-        "{{owner}}/{{kind}} 는 {{owner}} 안에서만 import 한다. 여러 기능이 쓰면 {{sharedFolder}}/{{kind}} 로 옮긴다.",
+        "{{owner}}/{{kind}} 는 {{owner}} 안에서만 import 해주세요. 여러 기능이 쓰면 {{sharedFolder}}/{{kind}} 로 옮겨주세요.",
     },
   },
   create(context) {

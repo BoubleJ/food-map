@@ -41,8 +41,9 @@ export const exportKindByFolder = defineRule({
   meta: {
     type: "suggestion",
     messages: {
-      wrongKind: "{{folder}}/ 에서는 {{allowed}}만 export 한다.",
-      typeOutsideTypes: "export 하는 타입은 types/ 에 둔다. 이 파일에서만 쓰면 export 하지 않는다.",
+      wrongKind: "{{folder}}/ 에서는 {{allowed}}만 export 해주세요.",
+      typeOutsideTypes:
+        "export 하는 타입은 types/ 에 둬주세요. 이 파일에서만 쓰면 export 하지 말아주세요.",
     },
   },
   create(context) {

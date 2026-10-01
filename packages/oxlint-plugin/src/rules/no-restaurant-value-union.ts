@@ -9,7 +9,7 @@ export const noRestaurantValueUnion = defineRule({
     type: "problem",
     messages: {
       union:
-        "업종, 요리 종류 유니온을 새로 선언하지 말고 @food-map/shared/restaurant 의 RestaurantCategory, RestaurantCuisine 을 쓴다.",
+        "업종, 요리 종류 유니온을 새로 선언하지 말고 @food-map/shared/restaurant 의 RestaurantCategory, RestaurantCuisine 을 써주세요.",
     },
   },
   create(context) {
