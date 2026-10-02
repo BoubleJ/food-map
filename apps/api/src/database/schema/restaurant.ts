@@ -1,4 +1,4 @@
-import { RESTAURANT_CATEGORIES, RESTAURANT_CUISINES } from "@food-map/shared/restaurant";
+import { RESTAURANT_CATEGORIES } from "@food-map/shared/restaurant";
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -17,15 +17,12 @@ import {
 
 export const restaurantCategory = pgEnum("restaurant_category", RESTAURANT_CATEGORIES);
 
-export const restaurantCuisine = pgEnum("restaurant_cuisine", RESTAURANT_CUISINES);
-
 export const restaurants = pgTable(
   "restaurants",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
-    category: restaurantCategory("category").notNull(),
-    cuisine: restaurantCuisine("cuisine"),
+    categories: restaurantCategory("categories").array().notNull(),
     description: text("description"),
     roadAddress: text("road_address").notNull(),
     jibunAddress: text("jibun_address"),
@@ -52,7 +49,8 @@ export const restaurants = pgTable(
       table.regionSigungu,
       table.regionEupmyeondong,
     ),
-    index("restaurants_category_cuisine_idx").on(table.category, table.cuisine),
+    index("restaurants_categories_idx").using("gin", table.categories),
+    check("restaurants_categories_not_empty_check", sql`cardinality(${table.categories}) > 0`),
   ],
 );
 

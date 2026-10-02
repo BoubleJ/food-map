@@ -1,19 +1,25 @@
-export const RESTAURANT_CATEGORIES = ["restaurant", "cafe", "bakery", "bar"] as const;
-
-export const RESTAURANT_CUISINES = [
+export const RESTAURANT_CATEGORIES = [
   "korean",
-  "japanese",
   "chinese",
+  "japanese",
   "western",
+  "bakery",
+  "icecream",
+  "cafe",
+  "fastfood",
+  "bunsik",
+  "bar",
   "vietnamese",
   "thai",
-  "turkish",
-  "bunsik",
-  "mexican",
   "indian",
-  "other",
+  "meat",
+  "udon",
+  "tonkatsu",
+  "sushi",
+  "seafood",
+  "soba",
+  "shaved",
+  "donut",
 ] as const;
 
 export type RestaurantCategory = (typeof RESTAURANT_CATEGORIES)[number];
-
-export type RestaurantCuisine = (typeof RESTAURANT_CUISINES)[number];

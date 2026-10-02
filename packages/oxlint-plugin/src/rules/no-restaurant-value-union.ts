@@ -1,7 +1,7 @@
-import { RESTAURANT_CATEGORIES, RESTAURANT_CUISINES } from "@food-map/shared/restaurant";
+import { RESTAURANT_CATEGORIES } from "@food-map/shared/restaurant";
 import { defineRule } from "@oxlint/plugins";
 
-const RESTAURANT_VALUES = new Set<string>([...RESTAURANT_CATEGORIES, ...RESTAURANT_CUISINES]);
+const RESTAURANT_VALUES = new Set<string>(RESTAURANT_CATEGORIES);
 const DEFINITION_FILE = "packages/shared/src/restaurant.ts";
 
 export const noRestaurantValueUnion = defineRule({
@@ -9,7 +9,7 @@ export const noRestaurantValueUnion = defineRule({
     type: "problem",
     messages: {
       union:
-        "업종, 요리 종류 유니온을 새로 선언하지 말고 @food-map/shared/restaurant 의 RestaurantCategory, RestaurantCuisine 을 써주세요.",
+        "음식점 분류 유니온을 새로 선언하지 말고 @food-map/shared/restaurant 의 RestaurantCategory 를 써주세요.",
     },
   },
   create(context) {
