@@ -1,23 +1,10 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import type {
+  RestaurantAddress,
+  RestaurantCandidate,
+} from "@food-map/shared/admin/restaurant-search";
 import { AddressSearchService } from "@/admin/address-search/address-search.service";
 import { PlaceSearchService } from "@/admin/place-search/place-search.service";
-
-interface RestaurantAddress {
-  roadAddress: string;
-  jibunAddress: string;
-  regionSido: string;
-  regionSigungu: string | null;
-  regionEupmyeondong: string;
-  longitude: number;
-  latitude: number;
-}
-
-interface RestaurantCandidate {
-  kakaoPlaceId: string;
-  name: string;
-  placeUrl: string;
-  address: RestaurantAddress | null;
-}
 
 type AddressField = "roadAddress" | "jibunAddress";
 

@@ -21,6 +21,8 @@
     "@nestjs/drizzle": "^0.0.1",
     "@nestjs/http-client": "^0.0.1",
     "@nestjs/platform-express": "12.1.0",
+    "@orpc/nest": "^1.15.4",
+    "@orpc/server": "^1.15.4",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",

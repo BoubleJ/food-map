@@ -5,13 +5,16 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./restaurant": "./src/restaurant.ts"
+    "./restaurant": "./src/restaurant.ts",
+    "./contract": "./src/contract.ts",
+    "./admin/restaurant-search": "./src/admin/restaurant-search.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@orpc/contract": "^1.15.4",
     "zod": "^4.6.5"
   },
   "devDependencies": {

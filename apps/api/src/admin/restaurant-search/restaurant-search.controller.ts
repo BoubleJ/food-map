@@ -1,13 +1,16 @@
-import { Controller, Get, Query } from "@nestjs/common";
-import { SearchKeywordQuery } from "@/admin/dto/search-keyword.query";
+import { Controller } from "@nestjs/common";
+import { Implement, implement } from "@orpc/nest";
+import { contract } from "@food-map/shared/contract";
 import { RestaurantSearchService } from "@/admin/restaurant-search/restaurant-search.service";
 
-@Controller("admin/restaurant-search")
+@Controller()
 export class RestaurantSearchController {
   constructor(private readonly restaurantSearchService: RestaurantSearchService) {}
 
-  @Get()
-  search(@Query() { keyword }: SearchKeywordQuery) {
-    return this.restaurantSearchService.search(keyword);
+  @Implement(contract.admin.restaurantSearch)
+  search() {
+    return implement(contract.admin.restaurantSearch).handler(({ input: { keyword } }) =>
+      this.restaurantSearchService.search(keyword),
+    );
   }
 }
