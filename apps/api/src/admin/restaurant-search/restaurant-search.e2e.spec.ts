@@ -8,6 +8,7 @@ import { JUSO_CLIENT } from "@/admin/address-search/address-search.service";
 import { AdminModule } from "@/admin/admin.module";
 import { KAKAO_LOCAL_CLIENT } from "@/admin/place-search/place-search.service";
 import { configureApp } from "@/configure-app";
+import { AppOrpcModule } from "@/orpc/orpc.module";
 
 const kakaoPlace = {
   id: "17131878",
@@ -55,6 +56,7 @@ describe("GET /api/admin/restaurant-search", () => {
             }),
           ],
         }),
+        AppOrpcModule,
         AdminModule,
       ],
     })
@@ -129,6 +131,19 @@ describe("GET /api/admin/restaurant-search", () => {
       .expect(200, []);
 
     expect(jusoGet).not.toHaveBeenCalled();
+  });
+
+  it("행정안전부 주소 검색이 서비스 오류를 응답하면 502 로 응답한다", async () => {
+    kakaoGet.mockResolvedValue({ data: { documents: [kakaoPlace] } });
+    jusoGet.mockResolvedValue({
+      data: { results: { common: { errorCode: "-999", errorMessage: "시스템에러" }, juso: null } },
+    });
+
+    const response = await request(app.getHttpServer())
+      .get("/api/admin/restaurant-search")
+      .query({ keyword: "수타우동겐" });
+
+    expect(response.status).toBe(502);
   });
 
   it.each([
