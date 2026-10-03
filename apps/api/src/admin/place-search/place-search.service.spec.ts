@@ -8,6 +8,7 @@ function createKakaoPlace(overrides: Record<string, string>) {
     id: "17131878",
     place_name: "수타우동겐 본점",
     category_group_code: "FD6",
+    category_name: "음식점 > 일식 > 우동,소바",
     road_address_name: "경기 성남시 분당구 야탑로 72",
     address_name: "경기 성남시 분당구 야탑동 503",
     place_url: "http://place.map.kakao.com/17131878",
@@ -30,13 +31,14 @@ describe("PlaceSearchService", () => {
     service = moduleRef.get(PlaceSearchService);
   });
 
-  it("카카오 키워드 검색으로 장소 ID, 이름, 주소, 카카오맵 url 을 돌려준다", async () => {
+  it("카카오 키워드 검색으로 장소 ID, 이름, 카테고리, 주소, 카카오맵 url 을 돌려준다", async () => {
     get.mockResolvedValue({ data: { documents: [createKakaoPlace({})] } });
 
     await expect(service.search("수타우동겐")).resolves.toEqual([
       {
         kakaoPlaceId: "17131878",
         name: "수타우동겐 본점",
+        categoryName: "음식점 > 일식 > 우동,소바",
         roadAddress: "경기 성남시 분당구 야탑로 72",
         jibunAddress: "경기 성남시 분당구 야탑동 503",
         placeUrl: "http://place.map.kakao.com/17131878",

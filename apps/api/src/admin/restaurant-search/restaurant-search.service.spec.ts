@@ -1,4 +1,5 @@
 import { BadGatewayException, NotFoundException } from "@nestjs/common";
+import { getDrizzleToken } from "@nestjs/drizzle";
 import { Test } from "@nestjs/testing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AddressSearchService } from "@/admin/address-search/address-search.service";
@@ -17,6 +18,7 @@ function createPlace(overrides: Record<string, string>) {
   return {
     kakaoPlaceId: "17131878",
     name: "수타우동겐 본점",
+    categoryName: "음식점 > 일식 > 우동,소바",
     roadAddress: "경기 성남시 분당구 야탑로 72",
     jibunAddress: "경기 성남시 분당구 야탑동 503",
     placeUrl: "http://place.map.kakao.com/17131878",
@@ -40,22 +42,28 @@ describe("RestaurantSearchService", () => {
   const searchPlace = vi.fn<PlaceSearchService["search"]>();
   const searchAddress = vi.fn<AddressSearchService["search"]>();
   const findCoordinate = vi.fn<AddressSearchService["findCoordinate"]>();
+  const findRegistered = vi.fn<() => Promise<{ kakaoPlaceId: string | null }[]>>();
   let service: RestaurantSearchService;
 
   beforeEach(async () => {
     vi.resetAllMocks();
     findCoordinate.mockResolvedValue({ longitude: 127.12682, latitude: 37.40958 });
+    findRegistered.mockResolvedValue([]);
     const moduleRef = await Test.createTestingModule({
       providers: [
         RestaurantSearchService,
         { provide: PlaceSearchService, useValue: { search: searchPlace } },
         { provide: AddressSearchService, useValue: { search: searchAddress, findCoordinate } },
+        {
+          provide: getDrizzleToken(),
+          useValue: { select: () => ({ from: () => ({ where: findRegistered }) }) },
+        },
       ],
     }).compile();
     service = moduleRef.get(RestaurantSearchService);
   });
 
-  it("카카오 장소에 행정안전부 주소와 좌표를 합쳐 돌려준다", async () => {
+  it("카카오 장소에 행정안전부 주소와 좌표, 등록 여부를 합쳐 돌려준다", async () => {
     searchPlace.mockResolvedValue([createPlace({})]);
     searchAddress.mockResolvedValue([createAddress({})]);
 
@@ -63,7 +71,9 @@ describe("RestaurantSearchService", () => {
       {
         kakaoPlaceId: "17131878",
         name: "수타우동겐 본점",
+        categoryName: "음식점 > 일식 > 우동,소바",
         placeUrl: "http://place.map.kakao.com/17131878",
+        isRegistered: false,
         address: {
           roadAddress: "경기도 성남시 분당구 야탑로 72",
           jibunAddress: "경기도 성남시 분당구 야탑동 503",
@@ -191,11 +201,30 @@ describe("RestaurantSearchService", () => {
     ]);
   });
 
-  it("남은 카카오 장소가 없으면 주소를 검색하지 않고 빈 배열을 돌려준다", async () => {
+  it("DB 에 같은 카카오 장소 ID 로 등록된 식당이 있으면 isRegistered 를 true 로 돌려준다", async () => {
+    searchPlace.mockResolvedValue([
+      createPlace({ kakaoPlaceId: "1" }),
+      createPlace({ kakaoPlaceId: "2" }),
+    ]);
+    searchAddress.mockResolvedValue([createAddress({})]);
+    findRegistered.mockResolvedValue([{ kakaoPlaceId: "2" }]);
+
+    const restaurants = await service.search("수타우동겐");
+
+    expect(
+      restaurants.map(({ kakaoPlaceId, isRegistered }) => [kakaoPlaceId, isRegistered]),
+    ).toEqual([
+      ["1", false],
+      ["2", true],
+    ]);
+  });
+
+  it("남은 카카오 장소가 없으면 주소와 등록 여부를 조회하지 않고 빈 배열을 돌려준다", async () => {
     searchPlace.mockResolvedValue([]);
 
     await expect(service.search("주원초밥")).resolves.toEqual([]);
     expect(searchAddress).not.toHaveBeenCalled();
+    expect(findRegistered).not.toHaveBeenCalled();
   });
 
   it("행정안전부 서비스 오류는 그대로 502 로 전달한다", async () => {

@@ -5,6 +5,7 @@ interface KakaoPlaceDocument {
   id: string;
   place_name: string;
   category_group_code: string;
+  category_name: string;
   road_address_name: string;
   address_name: string;
   place_url: string;
@@ -17,6 +18,7 @@ interface KakaoKeywordSearchResponse {
 interface PlaceCandidate {
   kakaoPlaceId: string;
   name: string;
+  categoryName: string;
   roadAddress: string;
   jibunAddress: string;
   placeUrl: string;
@@ -44,9 +46,10 @@ export class PlaceSearchService {
           RESTAURANT_CATEGORY_GROUP_CODES.includes(category_group_code) &&
           removeSpaces(place_name).includes(keywordWithoutSpaces),
       )
-      .map(({ id, place_name, road_address_name, address_name, place_url }) => ({
+      .map(({ id, place_name, category_name, road_address_name, address_name, place_url }) => ({
         kakaoPlaceId: id,
         name: place_name,
+        categoryName: category_name,
         roadAddress: road_address_name,
         jibunAddress: address_name,
         placeUrl: place_url,

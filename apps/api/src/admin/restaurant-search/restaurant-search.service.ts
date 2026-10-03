@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectDrizzle } from "@nestjs/drizzle";
 import type {
   RestaurantAddress,
   RestaurantCandidate,
 } from "@food-map/shared/admin/restaurant-search";
+import { inArray } from "drizzle-orm";
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { AddressSearchService } from "@/admin/address-search/address-search.service";
 import { PlaceSearchService } from "@/admin/place-search/place-search.service";
+import { restaurants } from "@/database/schema/restaurant";
 
 type AddressField = "roadAddress" | "jibunAddress";
 
@@ -17,21 +21,39 @@ export class RestaurantSearchService {
   constructor(
     private readonly placeSearchService: PlaceSearchService,
     private readonly addressSearchService: AddressSearchService,
+    @InjectDrizzle() private readonly db: PostgresJsDatabase,
   ) {}
 
   async search(keyword: string): Promise<RestaurantCandidate[]> {
     const places = await this.placeSearchService.search(keyword);
+    if (places.length === 0) return [];
+
+    const registeredPlaceIds = await this.findRegisteredPlaceIds(
+      places.map(({ kakaoPlaceId }) => kakaoPlaceId),
+    );
 
     return Promise.all(
-      places.map(async ({ kakaoPlaceId, name, placeUrl, roadAddress, jibunAddress }) => ({
-        kakaoPlaceId,
-        name,
-        placeUrl,
-        address: roadAddress
-          ? await this.findAddress(roadAddress, "roadAddress")
-          : await this.findAddress(jibunAddress, "jibunAddress"),
-      })),
+      places.map(
+        async ({ kakaoPlaceId, name, categoryName, placeUrl, roadAddress, jibunAddress }) => ({
+          kakaoPlaceId,
+          name,
+          categoryName,
+          placeUrl,
+          isRegistered: registeredPlaceIds.has(kakaoPlaceId),
+          address: roadAddress
+            ? await this.findAddress(roadAddress, "roadAddress")
+            : await this.findAddress(jibunAddress, "jibunAddress"),
+        }),
+      ),
     );
+  }
+
+  private async findRegisteredPlaceIds(kakaoPlaceIds: string[]) {
+    const registered = await this.db
+      .select({ kakaoPlaceId: restaurants.kakaoPlaceId })
+      .from(restaurants)
+      .where(inArray(restaurants.kakaoPlaceId, kakaoPlaceIds));
+    return new Set(registered.map(({ kakaoPlaceId }) => kakaoPlaceId));
   }
 
   private async findAddress(

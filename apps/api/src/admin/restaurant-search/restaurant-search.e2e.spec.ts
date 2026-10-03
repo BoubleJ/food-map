@@ -1,5 +1,6 @@
 import type { INestApplication } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { DrizzleModule } from "@nestjs/drizzle";
 import { getHttpClientToken } from "@nestjs/http-client";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
@@ -14,6 +15,7 @@ const kakaoPlace = {
   id: "17131878",
   place_name: "수타우동겐 본점",
   category_group_code: "FD6",
+  category_name: "음식점 > 일식 > 우동,소바",
   road_address_name: "경기 성남시 분당구 야탑로 72",
   address_name: "경기 성남시 분당구 야탑동 503",
   place_url: "http://place.map.kakao.com/17131878",
@@ -40,6 +42,7 @@ function createJusoResponse(juso: object[]) {
 describe("GET /api/admin/restaurant-search", () => {
   const kakaoGet = vi.fn<(url: string, options?: object) => Promise<unknown>>();
   const jusoGet = vi.fn<(url: string, options?: object) => Promise<unknown>>();
+  const findRegistered = vi.fn<() => Promise<{ kakaoPlaceId: string | null }[]>>();
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -58,6 +61,10 @@ describe("GET /api/admin/restaurant-search", () => {
         }),
         AppOrpcModule,
         AdminModule,
+        DrizzleModule.forRoot({
+          db: { select: () => ({ from: () => ({ where: findRegistered }) }) },
+          autoCloseConnection: false,
+        }),
       ],
     })
       .overrideProvider(getHttpClientToken(KAKAO_LOCAL_CLIENT))
@@ -78,6 +85,8 @@ describe("GET /api/admin/restaurant-search", () => {
   beforeEach(() => {
     kakaoGet.mockReset();
     jusoGet.mockReset();
+    findRegistered.mockReset();
+    findRegistered.mockResolvedValue([]);
   });
 
   it("카카오 장소를 검색하고 행정안전부 주소와 WGS84 좌표를 합쳐 응답한다", async () => {
@@ -97,7 +106,9 @@ describe("GET /api/admin/restaurant-search", () => {
       {
         kakaoPlaceId: "17131878",
         name: "수타우동겐 본점",
+        categoryName: "음식점 > 일식 > 우동,소바",
         placeUrl: "http://place.map.kakao.com/17131878",
+        isRegistered: false,
         address: {
           roadAddress: "경기도 성남시 분당구 야탑로 72",
           jibunAddress: "경기도 성남시 분당구 야탑동 503",
@@ -118,6 +129,19 @@ describe("GET /api/admin/restaurant-search", () => {
         query: expect.objectContaining({ keyword: "경기 성남시 분당구 야탑로 72" }),
       }),
     );
+  });
+
+  it("DB 에 같은 카카오 장소 ID 로 등록된 식당이 있으면 isRegistered 를 true 로 응답한다", async () => {
+    kakaoGet.mockResolvedValue({ data: { documents: [kakaoPlace] } });
+    jusoGet.mockResolvedValue(createJusoResponse([]));
+    findRegistered.mockResolvedValue([{ kakaoPlaceId: "17131878" }]);
+
+    const response = await request(app.getHttpServer())
+      .get("/api/admin/restaurant-search")
+      .query({ keyword: "수타우동겐" })
+      .expect(200);
+
+    expect(response.body).toEqual([expect.objectContaining({ isRegistered: true })]);
   });
 
   it("이름이 검색어를 포함하는 장소가 없으면 주소를 검색하지 않고 빈 배열로 응답한다", async () => {

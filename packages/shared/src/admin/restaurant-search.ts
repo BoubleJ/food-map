@@ -18,7 +18,9 @@ const restaurantAddressSchema = z.object({
 const restaurantCandidateSchema = z.object({
   kakaoPlaceId: z.string(),
   name: z.string(),
+  categoryName: z.string(),
   placeUrl: z.string(),
+  isRegistered: z.boolean(),
   address: restaurantAddressSchema.nullable(),
 });
 
