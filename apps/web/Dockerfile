@@ -12,7 +12,7 @@ COPY --from=pruner /repo/out/json/ ./
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 COPY --from=pruner /repo/out/full/ ./
-COPY tsconfig.base.json ./
+COPY tsconfig.base.json .env ./
 RUN pnpm --filter @food-map/web build
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --prod --frozen-lockfile

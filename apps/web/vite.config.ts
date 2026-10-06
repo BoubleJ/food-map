@@ -5,6 +5,7 @@ import { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  envDir: "../..",
   plugins: [tailwindcss(), reactRouter(), babel({ presets: [reactCompilerPreset()] })],
   resolve: {
     tsconfigPaths: true,
