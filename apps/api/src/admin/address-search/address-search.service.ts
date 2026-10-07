@@ -4,6 +4,7 @@ import {
   HttpStatus,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { HttpClient, InjectHttpClient, toHttpException } from "@nestjs/http-client";
@@ -69,6 +70,12 @@ type JusoErrorStatus = HttpStatus.BAD_REQUEST | HttpStatus.BAD_GATEWAY;
 
 const JUSO_SUCCESS_CODE = "0";
 
+const JUSO_TOO_MANY_REQUESTS_CODE = "E0007";
+
+const TOO_MANY_REQUESTS_RETRY_DELAY_MS = 500;
+
+const MAX_TOO_MANY_REQUESTS_RETRIES = 3;
+
 // 좌표제공 API 는 UTM-K(EPSG:5179) 좌표를 돌려준다. restaurants.location 은 WGS84(EPSG:4326) 로 저장한다
 const UTM_K =
   "+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs";
@@ -96,6 +103,10 @@ function createJusoException(
   return status === HttpStatus.BAD_REQUEST
     ? new BadRequestException(errorMessage)
     : new BadGatewayException(failureMessage);
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function removeBuildingName(jibunAddress: string, buildingName: string) {
@@ -167,7 +178,8 @@ export class AddressSearchService {
     path: string,
     query: Record<string, string | number>,
     failureMessage: string,
-  ) {
+    retryCount = 0,
+  ): Promise<T[]> {
     let data: JusoResponse<T>;
     try {
       ({ data } = await this.juso.get<JusoResponse<T>>(path, {
@@ -178,6 +190,15 @@ export class AddressSearchService {
     }
 
     const { common, juso } = data.results;
+    if (common.errorCode === JUSO_TOO_MANY_REQUESTS_CODE) {
+      if (retryCount >= MAX_TOO_MANY_REQUESTS_RETRIES) {
+        throw new ServiceUnavailableException(
+          "주소 조회 요청이 많습니다. 잠시 후 다시 시도해 주세요.",
+        );
+      }
+      await wait(TOO_MANY_REQUESTS_RETRY_DELAY_MS);
+      return this.request(path, query, failureMessage, retryCount + 1);
+    }
     if (common.errorCode !== JUSO_SUCCESS_CODE) throw createJusoException(common, failureMessage);
     return juso ?? [];
   }

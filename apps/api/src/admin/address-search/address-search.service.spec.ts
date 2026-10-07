@@ -1,8 +1,13 @@
-import { BadGatewayException, BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+  BadGatewayException,
+  BadRequestException,
+  NotFoundException,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { getHttpClientToken } from "@nestjs/http-client";
 import { Test } from "@nestjs/testing";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AddressSearchService, JUSO_CLIENT } from "@/admin/address-search/address-search.service";
 
 function createJusoResponse(errorCode: string, errorMessage: string) {
@@ -55,6 +60,10 @@ describe("AddressSearchService", () => {
       ],
     }).compile();
     service = moduleRef.get(AddressSearchService);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("괄호 참고항목이 없는 도로명 주소와 지역, 좌표 조회 값을 돌려준다", async () => {
@@ -142,5 +151,35 @@ describe("AddressSearchService", () => {
     await expect(service.findCoordinate(coordinateQuery)).rejects.toThrow(
       new BadGatewayException("주소 좌표 조회에 실패했습니다."),
     );
+  });
+  it("짧은 시간 요청이 많다는 코드(E0007)면 0.5초 뒤 다시 요청한다", async () => {
+    vi.useFakeTimers();
+    get
+      .mockResolvedValueOnce(createJusoResponse("E0007", "짧은 시간동안 다량의 주소검색 요청"))
+      .mockResolvedValueOnce(
+        createCoordinateResponse([{ entX: "966975.1231662666", entY: "1934560.2263797005" }]),
+      );
+
+    const coordinate = service.findCoordinate(coordinateQuery);
+    await vi.advanceTimersByTimeAsync(499);
+    expect(get).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+
+    await expect(coordinate).resolves.toEqual({
+      longitude: expect.closeTo(127.126824, 6),
+      latitude: expect.closeTo(37.409579, 6),
+    });
+    expect(get).toHaveBeenCalledTimes(2);
+  });
+
+  it("E0007 이 3번 다시 요청해도 이어지면 503 으로 바꾼다", async () => {
+    vi.useFakeTimers();
+    get.mockResolvedValue(createJusoResponse("E0007", "짧은 시간동안 다량의 주소검색 요청"));
+
+    const result = service.search("야탑로 72").catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(1500);
+
+    await expect(result).resolves.toBeInstanceOf(ServiceUnavailableException);
+    expect(get).toHaveBeenCalledTimes(4);
   });
 });

@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { HttpClientModule } from "@nestjs/http-client";
+import { AddressLookupController } from "@/admin/address-lookup/address-lookup.controller";
+import { AddressLookupService } from "@/admin/address-lookup/address-lookup.service";
 import { AddressSearchController } from "@/admin/address-search/address-search.controller";
 import { AddressSearchService, JUSO_CLIENT } from "@/admin/address-search/address-search.service";
 import { KAKAO_LOCAL_CLIENT, PlaceSearchService } from "@/admin/place-search/place-search.service";
@@ -23,7 +25,12 @@ import type { Env } from "@/_common/types/env";
       baseUrl: "https://business.juso.go.kr",
     }),
   ],
-  controllers: [AddressSearchController, RestaurantSearchController],
-  providers: [AddressSearchService, PlaceSearchService, RestaurantSearchService],
+  controllers: [AddressSearchController, AddressLookupController, RestaurantSearchController],
+  providers: [
+    AddressSearchService,
+    AddressLookupService,
+    PlaceSearchService,
+    RestaurantSearchService,
+  ],
 })
 export class AdminModule {}
