@@ -8,7 +8,8 @@
     "./restaurant": "./src/restaurant.ts",
     "./contract": "./src/contract.ts",
     "./admin/restaurant-search": "./src/admin/restaurant-search.ts",
-    "./admin/address-lookup": "./src/admin/address-lookup.ts"
+    "./admin/address-lookup": "./src/admin/address-lookup.ts",
+    "./admin/restaurant-register": "./src/admin/restaurant-register.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

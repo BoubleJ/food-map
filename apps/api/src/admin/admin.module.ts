@@ -6,6 +6,8 @@ import { AddressLookupService } from "@/admin/address-lookup/address-lookup.serv
 import { AddressSearchController } from "@/admin/address-search/address-search.controller";
 import { AddressSearchService, JUSO_CLIENT } from "@/admin/address-search/address-search.service";
 import { KAKAO_LOCAL_CLIENT, PlaceSearchService } from "@/admin/place-search/place-search.service";
+import { RestaurantRegisterController } from "@/admin/restaurant-register/restaurant-register.controller";
+import { RestaurantRegisterService } from "@/admin/restaurant-register/restaurant-register.service";
 import { RestaurantSearchController } from "@/admin/restaurant-search/restaurant-search.controller";
 import { RestaurantSearchService } from "@/admin/restaurant-search/restaurant-search.service";
 import type { Env } from "@/_common/types/env";
@@ -25,12 +27,18 @@ import type { Env } from "@/_common/types/env";
       baseUrl: "https://business.juso.go.kr",
     }),
   ],
-  controllers: [AddressSearchController, AddressLookupController, RestaurantSearchController],
+  controllers: [
+    AddressSearchController,
+    AddressLookupController,
+    RestaurantSearchController,
+    RestaurantRegisterController,
+  ],
   providers: [
     AddressSearchService,
     AddressLookupService,
     PlaceSearchService,
     RestaurantSearchService,
+    RestaurantRegisterService,
   ],
 })
 export class AdminModule {}
