@@ -33,6 +33,7 @@ export const restaurants = pgTable(
     thumbnailUrl: text("thumbnail_url"),
     kakaoPlaceId: text("kakao_place_id").unique(),
     kakaoPlaceUrl: text("kakao_place_url"),
+    franchiseName: text("franchise_name"),
     isInBusiness: boolean("is_in_business").notNull().default(true),
     isVisible: boolean("is_visible").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -50,7 +51,9 @@ export const restaurants = pgTable(
       table.regionEupmyeondong,
     ),
     index("restaurants_categories_idx").using("gin", table.categories),
+    index("restaurants_franchise_name_idx").on(table.franchiseName),
     check("restaurants_categories_not_empty_check", sql`cardinality(${table.categories}) > 0`),
+    check("restaurants_franchise_name_not_empty_check", sql`${table.franchiseName} <> ''`),
   ],
 );
 

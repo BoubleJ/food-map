@@ -20,6 +20,9 @@ export const RESTAURANT_CATEGORIES = [
   "soba",
   "shaved",
   "donut",
+  "noodle",
+  "pocha",
+  "hof",
 ] as const;
 
 export type RestaurantCategory = (typeof RESTAURANT_CATEGORIES)[number];
