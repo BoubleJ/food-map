@@ -1,0 +1,79 @@
+.root {
+  --marker-bg: var(--mantine-color-white);
+  --marker-border: var(--mantine-color-gray-5);
+  --marker-color: var(--mantine-color-black);
+
+  padding-bottom: 6px;
+}
+
+.root[data-variant="selected"] {
+  --marker-bg: var(--mantine-color-blue-filled);
+  --marker-border: var(--mantine-color-blue-filled);
+  --marker-color: var(--mantine-color-white);
+}
+
+.root[data-variant="registered"] {
+  --marker-bg: var(--mantine-color-gray-2);
+  --marker-border: var(--mantine-color-gray-4);
+  --marker-color: var(--mantine-color-gray-6);
+}
+
+.root[data-active] {
+  animation: bob 0.9s ease-in-out infinite;
+}
+
+.bubble {
+  position: relative;
+  max-width: 160px;
+  padding: 4px 10px;
+  border: 1px solid var(--marker-border);
+  border-radius: 16px;
+  background: var(--marker-bg);
+  color: var(--marker-color);
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow: var(--mantine-shadow-xs);
+}
+
+.root[data-variant="selected"] .bubble {
+  font-weight: 700;
+}
+
+.root[data-active] .bubble {
+  box-shadow: var(--mantine-shadow-md);
+}
+
+.bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--marker-border);
+  border-bottom-width: 0;
+}
+
+.name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root[data-active] {
+    animation: none;
+  }
+}
