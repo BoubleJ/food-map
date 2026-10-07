@@ -1,59 +1,37 @@
-import { BadGatewayException, NotFoundException } from "@nestjs/common";
 import { getDrizzleToken } from "@nestjs/drizzle";
 import { Test } from "@nestjs/testing";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AddressSearchService } from "@/admin/address-search/address-search.service";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PlaceSearchService } from "@/admin/place-search/place-search.service";
 import { RestaurantSearchService } from "@/admin/restaurant-search/restaurant-search.service";
 
-const coordinateQuery = {
-  admCd: "4113510700",
-  rnMgtSn: "411353180041",
-  udrtYn: "0",
-  buldMnnm: "72",
-  buldSlno: "0",
-};
-
-function createPlace(overrides: Record<string, string>) {
+function createPlace(kakaoPlaceId: string) {
   return {
-    kakaoPlaceId: "17131878",
+    kakaoPlaceId,
     name: "수타우동겐 본점",
     categoryName: "음식점 > 일식 > 우동,소바",
     roadAddress: "경기 성남시 분당구 야탑로 72",
     jibunAddress: "경기 성남시 분당구 야탑동 503",
-    placeUrl: "http://place.map.kakao.com/17131878",
-    ...overrides,
+    placeUrl: `http://place.map.kakao.com/${kakaoPlaceId}`,
+    coordinate: { latitude: 37.409579, longitude: 127.126824 },
   };
 }
 
-function createAddress(overrides: Record<string, string>) {
-  return {
-    roadAddress: "경기도 성남시 분당구 야탑로 72",
-    jibunAddress: "경기도 성남시 분당구 야탑동 503",
-    regionSido: "경기도",
-    regionSigungu: "성남시 분당구",
-    regionEupmyeondong: "야탑동",
-    coordinateQuery,
-    ...overrides,
-  };
+function createPlaces(count: number) {
+  return Array.from({ length: count }, (_, index) => createPlace(String(index + 1)));
 }
 
 describe("RestaurantSearchService", () => {
   const searchPlace = vi.fn<PlaceSearchService["search"]>();
-  const searchAddress = vi.fn<AddressSearchService["search"]>();
-  const findCoordinate = vi.fn<AddressSearchService["findCoordinate"]>();
   const findRegistered = vi.fn<() => Promise<{ kakaoPlaceId: string | null }[]>>();
   let service: RestaurantSearchService;
 
   beforeEach(async () => {
     vi.resetAllMocks();
-    findCoordinate.mockResolvedValue({ longitude: 127.12682, latitude: 37.40958 });
     findRegistered.mockResolvedValue([]);
     const moduleRef = await Test.createTestingModule({
       providers: [
         RestaurantSearchService,
         { provide: PlaceSearchService, useValue: { search: searchPlace } },
-        { provide: AddressSearchService, useValue: { search: searchAddress, findCoordinate } },
         {
           provide: getDrizzleToken(),
           useValue: { select: () => ({ from: () => ({ where: findRegistered }) }) },
@@ -63,153 +41,40 @@ describe("RestaurantSearchService", () => {
     service = moduleRef.get(RestaurantSearchService);
   });
 
-  it("카카오 장소에 행정안전부 주소와 좌표, 등록 여부를 합쳐 돌려준다", async () => {
-    searchPlace.mockResolvedValue([createPlace({})]);
-    searchAddress.mockResolvedValue([createAddress({})]);
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
-    await expect(service.search("수타우동겐")).resolves.toEqual([
-      {
-        kakaoPlaceId: "17131878",
-        name: "수타우동겐 본점",
-        categoryName: "음식점 > 일식 > 우동,소바",
-        placeUrl: "http://place.map.kakao.com/17131878",
-        isRegistered: false,
-        address: {
-          roadAddress: "경기도 성남시 분당구 야탑로 72",
-          jibunAddress: "경기도 성남시 분당구 야탑동 503",
-          regionSido: "경기도",
-          regionSigungu: "성남시 분당구",
-          regionEupmyeondong: "야탑동",
-          longitude: 127.12682,
-          latitude: 37.40958,
-        },
-      },
+  it("카카오 장소에 등록 여부를 붙여 첫 15곳과 다음 페이지 여부를 돌려준다", async () => {
+    searchPlace.mockResolvedValue(createPlaces(20));
+
+    const { restaurants, hasNext } = await service.search("수타우동겐", 1);
+
+    expect(restaurants).toHaveLength(15);
+    expect(restaurants[0]).toEqual({ ...createPlace("1"), isRegistered: false });
+    expect(hasNext).toBe(true);
+  });
+
+  it("요청한 페이지의 15곳을 잘라 돌려준다", async () => {
+    searchPlace.mockResolvedValue(createPlaces(20));
+
+    const { restaurants, hasNext } = await service.search("수타우동겐", 2);
+
+    expect(restaurants.map(({ kakaoPlaceId }) => kakaoPlaceId)).toEqual([
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
     ]);
-    expect(searchAddress).toHaveBeenCalledWith("경기 성남시 분당구 야탑로 72");
-    expect(findCoordinate).toHaveBeenCalledWith(coordinateQuery);
-  });
-
-  it("카카오 장소에 도로명 주소가 없으면 지번 주소로 주소를 검색한다", async () => {
-    searchPlace.mockResolvedValue([createPlace({ roadAddress: "" })]);
-    searchAddress.mockResolvedValue([createAddress({})]);
-
-    await service.search("수타우동겐");
-
-    expect(searchAddress).toHaveBeenCalledWith("경기 성남시 분당구 야탑동 503");
-  });
-
-  it("카카오 장소에 도로명 주소와 지번 주소가 모두 없으면 주소를 검색하지 않고 address 를 null 로 돌려준다", async () => {
-    searchPlace.mockResolvedValue([createPlace({ roadAddress: "", jibunAddress: "" })]);
-
-    const [restaurant] = await service.search("수타우동겐");
-
-    expect(restaurant?.address).toBeNull();
-    expect(searchAddress).not.toHaveBeenCalled();
-  });
-
-  it("주소 검색 결과가 여러 개면 시도를 뺀 도로명 주소가 카카오 주소와 같은 결과를 고른다", async () => {
-    searchPlace.mockResolvedValue([createPlace({})]);
-    searchAddress.mockResolvedValue([
-      createAddress({
-        roadAddress: "경기도 성남시 분당구 야탑로 72-1",
-        regionEupmyeondong: "다른동",
-      }),
-      createAddress({}),
-    ]);
-
-    const [restaurant] = await service.search("수타우동겐");
-
-    expect(restaurant?.address?.regionEupmyeondong).toBe("야탑동");
-  });
-
-  it("지번 주소로 검색했을 때는 시도를 뺀 지번 주소가 같은 결과를 고른다", async () => {
-    searchPlace.mockResolvedValue([createPlace({ roadAddress: "" })]);
-    searchAddress.mockResolvedValue([
-      createAddress({
-        jibunAddress: "경기도 성남시 분당구 야탑동 503-1",
-        regionEupmyeondong: "다른동",
-      }),
-      createAddress({}),
-    ]);
-
-    const [restaurant] = await service.search("수타우동겐");
-
-    expect(restaurant?.address?.regionEupmyeondong).toBe("야탑동");
-  });
-
-  it("주소 검색 결과가 하나뿐이면 주소가 달라도 그 결과를 쓴다", async () => {
-    searchPlace.mockResolvedValue([createPlace({})]);
-    searchAddress.mockResolvedValue([
-      createAddress({ roadAddress: "경기도 성남시 분당구 야탑로72" }),
-    ]);
-
-    const [restaurant] = await service.search("수타우동겐");
-
-    expect(restaurant?.address?.roadAddress).toBe("경기도 성남시 분당구 야탑로72");
-  });
-
-  it("맞는 주소를 찾지 못하면 좌표를 조회하지 않고 address 를 null 로 돌려준다", async () => {
-    searchPlace.mockResolvedValue([createPlace({})]);
-    searchAddress.mockResolvedValue([
-      createAddress({ roadAddress: "경기도 성남시 분당구 야탑로 70" }),
-      createAddress({ roadAddress: "경기도 성남시 분당구 야탑로 74" }),
-    ]);
-
-    const [restaurant] = await service.search("수타우동겐");
-
-    expect(restaurant?.address).toBeNull();
-    expect(findCoordinate).not.toHaveBeenCalled();
-  });
-
-  it("주소 검색 결과가 없으면 address 를 null 로 돌려준다", async () => {
-    searchPlace.mockResolvedValue([createPlace({})]);
-    searchAddress.mockResolvedValue([]);
-
-    const [restaurant] = await service.search("수타우동겐");
-
-    expect(restaurant?.address).toBeNull();
-  });
-
-  it("좌표를 찾지 못하면 address 를 null 로 돌려준다", async () => {
-    searchPlace.mockResolvedValue([createPlace({})]);
-    searchAddress.mockResolvedValue([createAddress({})]);
-    findCoordinate.mockRejectedValue(new NotFoundException());
-
-    const [restaurant] = await service.search("수타우동겐");
-
-    expect(restaurant?.address).toBeNull();
-  });
-
-  it("여러 장소의 주소를 각각 조회해 카카오 결과 순서대로 돌려준다", async () => {
-    searchPlace.mockResolvedValue([
-      createPlace({ kakaoPlaceId: "1", roadAddress: "서울 서초구 서초대로77길 7" }),
-      createPlace({ kakaoPlaceId: "2", roadAddress: "서울 마포구 양화로 188" }),
-    ]);
-    searchAddress.mockImplementation(async (keyword: string) =>
-      keyword.includes("서초")
-        ? [createAddress({ roadAddress: "서울특별시 서초구 서초대로77길 7" })]
-        : [createAddress({ roadAddress: "서울특별시 마포구 양화로 188" })],
-    );
-
-    const restaurants = await service.search("고에몬");
-
-    expect(
-      restaurants.map(({ kakaoPlaceId, address }) => [kakaoPlaceId, address?.roadAddress]),
-    ).toEqual([
-      ["1", "서울특별시 서초구 서초대로77길 7"],
-      ["2", "서울특별시 마포구 양화로 188"],
-    ]);
+    expect(hasNext).toBe(false);
   });
 
   it("DB 에 같은 카카오 장소 ID 로 등록된 식당이 있으면 isRegistered 를 true 로 돌려준다", async () => {
-    searchPlace.mockResolvedValue([
-      createPlace({ kakaoPlaceId: "1" }),
-      createPlace({ kakaoPlaceId: "2" }),
-    ]);
-    searchAddress.mockResolvedValue([createAddress({})]);
+    searchPlace.mockResolvedValue(createPlaces(2));
     findRegistered.mockResolvedValue([{ kakaoPlaceId: "2" }]);
 
-    const restaurants = await service.search("수타우동겐");
+    const { restaurants } = await service.search("수타우동겐", 1);
 
     expect(
       restaurants.map(({ kakaoPlaceId, isRegistered }) => [kakaoPlaceId, isRegistered]),
@@ -219,18 +84,66 @@ describe("RestaurantSearchService", () => {
     ]);
   });
 
-  it("남은 카카오 장소가 없으면 주소와 등록 여부를 조회하지 않고 빈 배열을 돌려준다", async () => {
-    searchPlace.mockResolvedValue([]);
+  it("2페이지부터는 5분 안에 모은 결과를 다시 쓰고 카카오를 다시 검색하지 않는다", async () => {
+    searchPlace.mockResolvedValue(createPlaces(20));
 
-    await expect(service.search("주원초밥")).resolves.toEqual([]);
-    expect(searchAddress).not.toHaveBeenCalled();
-    expect(findRegistered).not.toHaveBeenCalled();
+    await service.search("수타우동겐", 1);
+    await service.search("수타우동겐", 2);
+
+    expect(searchPlace).toHaveBeenCalledTimes(1);
   });
 
-  it("행정안전부 서비스 오류는 그대로 502 로 전달한다", async () => {
-    searchPlace.mockResolvedValue([createPlace({})]);
-    searchAddress.mockRejectedValue(new BadGatewayException("주소 검색에 실패했습니다."));
+  it("1페이지는 모은 결과가 있어도 카카오를 다시 검색한다", async () => {
+    searchPlace.mockResolvedValue(createPlaces(20));
 
-    await expect(service.search("수타우동겐")).rejects.toBeInstanceOf(BadGatewayException);
+    await service.search("수타우동겐", 1);
+    await service.search("수타우동겐", 1);
+
+    expect(searchPlace).toHaveBeenCalledTimes(2);
+  });
+
+  it("모은 지 5분이 지나면 2페이지도 카카오를 다시 검색한다", async () => {
+    vi.useFakeTimers();
+    searchPlace.mockResolvedValue(createPlaces(20));
+
+    await service.search("수타우동겐", 1);
+    vi.advanceTimersByTime(5 * 60 * 1000);
+    await service.search("수타우동겐", 2);
+
+    expect(searchPlace).toHaveBeenCalledTimes(2);
+  });
+
+  it("검색어마다 모은 결과를 따로 다시 쓴다", async () => {
+    searchPlace.mockImplementation(async (keyword) => [createPlace(keyword)]);
+
+    await service.search("고에몬", 1);
+    await service.search("수타우동겐", 1);
+    const { restaurants } = await service.search("고에몬", 2);
+
+    expect(searchPlace).toHaveBeenCalledTimes(2);
+    expect(restaurants).toEqual([]);
+  });
+
+  it("모은 결과가 100개를 넘으면 가장 먼저 모은 검색어부터 지운다", async () => {
+    searchPlace.mockResolvedValue(createPlaces(20));
+
+    for (let index = 0; index <= 100; index++) {
+      await service.search(`검색어${index}`, 1);
+    }
+    await service.search("검색어0", 2);
+    await service.search("검색어100", 2);
+
+    expect(searchPlace).toHaveBeenCalledTimes(102);
+    expect(searchPlace).toHaveBeenLastCalledWith("검색어0");
+  });
+
+  it("돌려줄 장소가 없으면 등록 여부를 조회하지 않는다", async () => {
+    searchPlace.mockResolvedValue([]);
+
+    await expect(service.search("주원초밥", 1)).resolves.toEqual({
+      restaurants: [],
+      hasNext: false,
+    });
+    expect(findRegistered).not.toHaveBeenCalled();
   });
 });

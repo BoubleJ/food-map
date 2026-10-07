@@ -9,8 +9,8 @@ export class RestaurantSearchController {
 
   @Implement(contract.admin.restaurantSearch)
   search() {
-    return implement(contract.admin.restaurantSearch).handler(({ input: { keyword } }) =>
-      this.restaurantSearchService.search(keyword),
+    return implement(contract.admin.restaurantSearch).handler(({ input: { keyword, page } }) =>
+      this.restaurantSearchService.search(keyword, page),
     );
   }
 }

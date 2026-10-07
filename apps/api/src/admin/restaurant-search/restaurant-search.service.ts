@@ -1,81 +1,81 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import type {
-  RestaurantAddress,
   RestaurantCandidate,
+  RestaurantSearchResult,
 } from "@food-map/shared/admin/restaurant-search";
 import { inArray } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { AddressSearchService } from "@/admin/address-search/address-search.service";
 import { PlaceSearchService } from "@/admin/place-search/place-search.service";
 import { restaurants } from "@/database/schema/restaurant";
 
-type AddressField = "roadAddress" | "jibunAddress";
+type PlaceCandidate = Omit<RestaurantCandidate, "isRegistered">;
 
-function toAddressKey(address: string) {
-  return address.split(" ").slice(1).join("");
+interface CachedPlaces {
+  places: PlaceCandidate[];
+  expiresAt: number;
 }
+
+const PAGE_SIZE = 15;
+
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+const MAX_CACHE_SIZE = 100;
 
 @Injectable()
 export class RestaurantSearchService {
+  private readonly cache = new Map<string, CachedPlaces>();
+
   constructor(
     private readonly placeSearchService: PlaceSearchService,
-    private readonly addressSearchService: AddressSearchService,
     @InjectDrizzle() private readonly db: PostgresJsDatabase,
   ) {}
 
-  async search(keyword: string): Promise<RestaurantCandidate[]> {
-    const places = await this.placeSearchService.search(keyword);
-    if (places.length === 0) return [];
-
+  async search(keyword: string, page: number): Promise<RestaurantSearchResult> {
+    const places = await this.findPlaces(keyword, page);
+    const pagePlaces = places.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
     const registeredPlaceIds = await this.findRegisteredPlaceIds(
-      places.map(({ kakaoPlaceId }) => kakaoPlaceId),
+      pagePlaces.map(({ kakaoPlaceId }) => kakaoPlaceId),
     );
 
-    return Promise.all(
-      places.map(
-        async ({ kakaoPlaceId, name, categoryName, placeUrl, roadAddress, jibunAddress }) => ({
-          kakaoPlaceId,
-          name,
-          categoryName,
-          placeUrl,
-          isRegistered: registeredPlaceIds.has(kakaoPlaceId),
-          address: roadAddress
-            ? await this.findAddress(roadAddress, "roadAddress")
-            : await this.findAddress(jibunAddress, "jibunAddress"),
-        }),
-      ),
-    );
+    return {
+      restaurants: pagePlaces.map((place) => ({
+        ...place,
+        isRegistered: registeredPlaceIds.has(place.kakaoPlaceId),
+      })),
+      hasNext: places.length > page * PAGE_SIZE,
+    };
+  }
+
+  private async findPlaces(keyword: string, page: number) {
+    const cached = this.cache.get(keyword);
+    if (page > 1 && cached && cached.expiresAt > Date.now()) return cached.places;
+
+    const places = await this.placeSearchService.search(keyword);
+    this.saveCache(keyword, places);
+    return places;
+  }
+
+  private saveCache(keyword: string, places: PlaceCandidate[]) {
+    const now = Date.now();
+    for (const [key, { expiresAt }] of this.cache) {
+      if (expiresAt <= now) this.cache.delete(key);
+    }
+    this.cache.delete(keyword);
+    if (this.cache.size >= MAX_CACHE_SIZE) {
+      const oldestKeyword = this.cache.keys().next().value;
+      if (oldestKeyword !== undefined) this.cache.delete(oldestKeyword);
+    }
+    this.cache.set(keyword, { places, expiresAt: now + CACHE_TTL_MS });
   }
 
   private async findRegisteredPlaceIds(kakaoPlaceIds: string[]) {
+    if (kakaoPlaceIds.length === 0) return new Set<string>();
+
     const registered = await this.db
       .select({ kakaoPlaceId: restaurants.kakaoPlaceId })
       .from(restaurants)
       .where(inArray(restaurants.kakaoPlaceId, kakaoPlaceIds));
     return new Set(registered.map(({ kakaoPlaceId }) => kakaoPlaceId));
-  }
-
-  private async findAddress(
-    kakaoAddress: string,
-    field: AddressField,
-  ): Promise<RestaurantAddress | null> {
-    if (!kakaoAddress) return null;
-
-    const addresses = await this.addressSearchService.search(kakaoAddress);
-    const address =
-      addresses.find(
-        (candidate) => toAddressKey(candidate[field]) === toAddressKey(kakaoAddress),
-      ) ?? (addresses.length === 1 ? addresses[0] : undefined);
-    if (!address) return null;
-
-    const { coordinateQuery, ...addressFields } = address;
-    try {
-      const coordinate = await this.addressSearchService.findCoordinate(coordinateQuery);
-      return { ...addressFields, ...coordinate };
-    } catch (error) {
-      if (error instanceof NotFoundException) return null;
-      throw error;
-    }
   }
 }

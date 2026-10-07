@@ -3,16 +3,12 @@ import { z } from "zod";
 
 const restaurantSearchInputSchema = z.object({
   keyword: z.string().min(1).max(40),
+  page: z.coerce.number().int().min(1),
 });
 
-const restaurantAddressSchema = z.object({
-  roadAddress: z.string(),
-  jibunAddress: z.string(),
-  regionSido: z.string(),
-  regionSigungu: z.string().nullable(),
-  regionEupmyeondong: z.string(),
-  longitude: z.number(),
+const coordinateSchema = z.object({
   latitude: z.number(),
+  longitude: z.number(),
 });
 
 const restaurantCandidateSchema = z.object({
@@ -20,15 +16,22 @@ const restaurantCandidateSchema = z.object({
   name: z.string(),
   categoryName: z.string(),
   placeUrl: z.string(),
+  roadAddress: z.string(),
+  jibunAddress: z.string(),
+  coordinate: coordinateSchema,
   isRegistered: z.boolean(),
-  address: restaurantAddressSchema.nullable(),
 });
 
-export type RestaurantAddress = z.infer<typeof restaurantAddressSchema>;
+const restaurantSearchOutputSchema = z.object({
+  restaurants: z.array(restaurantCandidateSchema),
+  hasNext: z.boolean(),
+});
 
 export type RestaurantCandidate = z.infer<typeof restaurantCandidateSchema>;
+
+export type RestaurantSearchResult = z.infer<typeof restaurantSearchOutputSchema>;
 
 export const restaurantSearchContract = oc
   .route({ method: "GET", path: "/admin/restaurant-search" })
   .input(restaurantSearchInputSchema)
-  .output(z.array(restaurantCandidateSchema));
+  .output(restaurantSearchOutputSchema);
