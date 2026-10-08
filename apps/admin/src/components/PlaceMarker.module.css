@@ -18,8 +18,29 @@
   --marker-color: var(--mantine-color-gray-6);
 }
 
+.root[data-variant="address"] {
+  --marker-bg: var(--mantine-color-dark-7);
+  --marker-border: var(--mantine-color-white);
+  --marker-color: var(--mantine-color-white);
+}
+
+.root[data-shape="dot"] {
+  padding-bottom: 0;
+}
+
 .root[data-active] {
   animation: bob 0.9s ease-in-out infinite;
+}
+
+.dot {
+  display: block;
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border: 2px solid var(--marker-border);
+  border-radius: 50%;
+  background: var(--marker-bg);
+  box-shadow: var(--mantine-shadow-xs);
 }
 
 .bubble {
