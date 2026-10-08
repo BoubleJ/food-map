@@ -31,16 +31,14 @@ interface Rect {
   maxY: number;
 }
 
-interface SearchInRectParams {
-  keyword: string;
-  rect?: Rect;
-  depth: number;
-}
-
 interface KeywordSearchParams {
   keyword: string;
   page: number;
   rect?: Rect;
+}
+
+interface SearchInRectParams extends Omit<KeywordSearchParams, "page"> {
+  depth: number;
 }
 
 type PlaceCandidate = Omit<RestaurantCandidate, "isRegistered">;
@@ -67,10 +65,6 @@ function splitRect({ minX, minY, maxX, maxY }: Rect): Rect[] {
     { minX, minY: midY, maxX: midX, maxY },
     { minX: midX, minY: midY, maxX, maxY },
   ];
-}
-
-function toRectQuery({ minX, minY, maxX, maxY }: Rect) {
-  return `${minX},${minY},${maxX},${maxY}`;
 }
 
 @Injectable()
@@ -104,22 +98,22 @@ export class PlaceSearchService {
     const { meta, documents } = await this.requestKeywordSearch({ keyword, page: 1, rect });
 
     if (meta.total_count > meta.pageable_count && depth < MAX_SPLIT_DEPTH) {
-      const childDocuments: KakaoPlaceDocument[] = [];
-      for (const childRect of splitRect(rect ?? KOREA_RECT)) {
-        childDocuments.push(
-          ...(await this.searchInRect({ keyword, rect: childRect, depth: depth + 1 })),
-        );
-      }
-      return childDocuments;
+      const childDocuments = await Array.fromAsync(splitRect(rect ?? KOREA_RECT), (childRect) =>
+        this.searchInRect({ keyword, rect: childRect, depth: depth + 1 }),
+      );
+      return childDocuments.flat();
     }
 
-    let isEnd = meta.is_end;
-    for (let page = 2; !isEnd && page <= KAKAO_MAX_PAGE; page++) {
-      const nextPage = await this.requestKeywordSearch({ keyword, page, rect });
-      documents.push(...nextPage.documents);
-      isEnd = nextPage.meta.is_end;
-    }
-    return documents;
+    const requestNextPages = async (
+      page: number,
+      isEnd: boolean,
+    ): Promise<KakaoPlaceDocument[]> => {
+      if (isEnd || page > KAKAO_MAX_PAGE) return [];
+      const next = await this.requestKeywordSearch({ keyword, page, rect });
+      return [...next.documents, ...(await requestNextPages(page + 1, next.meta.is_end))];
+    };
+
+    return [...documents, ...(await requestNextPages(2, meta.is_end))];
   }
 
   private async requestKeywordSearch({ keyword, page, rect }: KeywordSearchParams) {
@@ -129,7 +123,7 @@ export class PlaceSearchService {
           query: keyword,
           size: KAKAO_PAGE_SIZE,
           page,
-          ...(rect && { rect: toRectQuery(rect) }),
+          ...(rect && { rect: `${rect.minX},${rect.minY},${rect.maxX},${rect.maxY}` }),
         },
       })
       .catch((error: unknown) => {
