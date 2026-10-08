@@ -74,9 +74,20 @@ const JUSO_ENDPOINTS = {
   },
 } as const;
 
-const JUSO_SUCCESS_CODE = "0";
-
-const JUSO_TOO_MANY_REQUESTS_CODE = "E0007";
+// 정상, 짧은_시간_다량_요청 외에는 검색어를 잘못 입력해서 나는 코드만 넣는다. 여기 있는 코드는 400 으로 응답한다
+const JUSO_ERROR_CODE = {
+  정상: "0",
+  검색어_없음: "E0005",
+  주소_상세_입력_필요: "E0006",
+  짧은_시간_다량_요청: "E0007",
+  검색어_한글자_미만: "E0008",
+  숫자만_검색: "E0009",
+  검색어_길이_초과: "E0010",
+  검색어_숫자_길이_초과: "E0011",
+  특수문자_숫자만_검색: "E0012",
+  SQL_예약어_특수문자_포함: "E0013",
+  검색_범위_초과: "E0015",
+} as const;
 
 const TOO_MANY_REQUESTS_RETRY_DELAY_MS = 500;
 
@@ -86,23 +97,12 @@ const MAX_TOO_MANY_REQUESTS_RETRIES = 3;
 const UTM_K =
   "+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs";
 
-const JUSO_BAD_REQUEST_CODES = new Set([
-  "E0005",
-  "E0006",
-  "E0008",
-  "E0009",
-  "E0010",
-  "E0011",
-  "E0012",
-  "E0013",
-  "E0015",
-]);
-
 function createJusoException(
   { errorCode, errorMessage }: JusoResponseStatus,
   failureMessage: string,
 ) {
-  if (JUSO_BAD_REQUEST_CODES.has(errorCode)) return new BadRequestException(errorMessage);
+  const badRequestCodes: readonly string[] = Object.values(JUSO_ERROR_CODE);
+  if (badRequestCodes.includes(errorCode)) return new BadRequestException(errorMessage);
   return new BadGatewayException(failureMessage);
 }
 
@@ -176,7 +176,7 @@ export class AddressSearchService {
         });
       const { common, juso } = data.results;
 
-      if (common.errorCode === JUSO_TOO_MANY_REQUESTS_CODE) {
+      if (common.errorCode === JUSO_ERROR_CODE.짧은_시간_다량_요청) {
         if (retryCount >= MAX_TOO_MANY_REQUESTS_RETRIES) {
           throw new ServiceUnavailableException(
             "주소 조회 요청이 많습니다. 잠시 후 다시 시도해 주세요.",
@@ -185,7 +185,8 @@ export class AddressSearchService {
         await new Promise((resolve) => setTimeout(resolve, TOO_MANY_REQUESTS_RETRY_DELAY_MS));
         return attempt(retryCount + 1);
       }
-      if (common.errorCode !== JUSO_SUCCESS_CODE) throw createJusoException(common, failureMessage);
+      if (common.errorCode !== JUSO_ERROR_CODE.정상)
+        throw createJusoException(common, failureMessage);
       return juso ?? [];
     };
 
