@@ -26,3 +26,30 @@ export const RESTAURANT_CATEGORIES = [
 ] as const;
 
 export type RestaurantCategory = (typeof RESTAURANT_CATEGORIES)[number];
+
+export const RESTAURANT_CATEGORY_LABELS: Record<RestaurantCategory, string> = {
+  korean: "한식",
+  chinese: "중식",
+  japanese: "일식",
+  western: "양식",
+  bakery: "베이커리",
+  icecream: "아이스크림",
+  cafe: "카페",
+  fastfood: "패스트푸드",
+  bunsik: "분식",
+  bar: "바",
+  vietnamese: "베트남 음식",
+  thai: "태국 음식",
+  indian: "인도 음식",
+  meat: "육류",
+  udon: "우동",
+  tonkatsu: "돈가스",
+  sushi: "초밥",
+  seafood: "해산물",
+  soba: "소바",
+  shaved: "빙수",
+  donut: "도넛",
+  noodle: "국수",
+  pocha: "포차",
+  hof: "호프",
+};
