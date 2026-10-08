@@ -1,10 +1,10 @@
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { type PropsWithChildren, type ReactElement, Suspense } from "react";
-import { ErrorBoundary } from "react-error-boundary";
+import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
 interface QueryBoundaryProps {
   pendingFallback: ReactElement;
-  errorFallback: ReactElement;
+  errorFallback: (props: FallbackProps) => ReactElement;
 }
 
 export function QueryBoundary({
@@ -15,7 +15,7 @@ export function QueryBoundary({
   return (
     <QueryErrorResetBoundary>
       {({ reset: handleReset }) => (
-        <ErrorBoundary onReset={handleReset} fallback={errorFallback}>
+        <ErrorBoundary onReset={handleReset} fallbackRender={errorFallback}>
           <Suspense fallback={pendingFallback}>{children}</Suspense>
         </ErrorBoundary>
       )}
