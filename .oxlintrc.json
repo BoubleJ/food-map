@@ -70,7 +70,8 @@
     ],
     "food-map/no-restaurant-value-union": "error",
     "food-map/prefer-object-params": "error",
-    "food-map/no-nullish-ternary-consequent": "error"
+    "food-map/no-nullish-ternary-consequent": "error",
+    "food-map/no-nested-type-literal": "error"
   },
   "overrides": [
     {
@@ -139,7 +140,6 @@
         "typescript/no-inferrable-types": "error",
         "food-map/no-type-prefix": "error",
         "food-map/prefer-props-with-children": "error",
-        "food-map/no-nested-type-literal": "error",
         "react/rules-of-hooks": "error",
         "react/unsupported-syntax": "error",
         "react/rule-suppression": "error",

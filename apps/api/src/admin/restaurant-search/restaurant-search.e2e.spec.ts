@@ -11,6 +11,14 @@ import { KAKAO_LOCAL_CLIENT } from "@/admin/place-search/place-search.service";
 import { configureApp } from "@/configure-app";
 import { AppOrpcModule } from "@/orpc/orpc.module";
 
+interface KakaoSearchQuery {
+  page: number;
+}
+
+interface KakaoSearchOptions {
+  query: KakaoSearchQuery;
+}
+
 const kakaoPlace = {
   id: "17131878",
   place_name: "수타우동겐 본점",
@@ -127,7 +135,7 @@ describe("GET /api/admin/restaurant-search", () => {
 
   it("쿼리스트링의 page 를 숫자로 받아 해당 페이지를 응답한다", async () => {
     kakaoGet.mockImplementation(async (_, options) => {
-      const { query } = options as { query: { page: number } };
+      const { query } = options as KakaoSearchOptions;
       return createKakaoResponse(
         Array.from({ length: 15 }, (_, index) => ({
           ...kakaoPlace,
