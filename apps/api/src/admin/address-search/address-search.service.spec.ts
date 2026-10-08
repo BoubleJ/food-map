@@ -1,7 +1,6 @@
 import {
   BadGatewayException,
   BadRequestException,
-  NotFoundException,
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -133,16 +132,16 @@ describe("AddressSearchService", () => {
       createCoordinateResponse([{ entX: "966975.1231662666", entY: "1934560.2263797005" }]),
     );
 
-    const { longitude, latitude } = await service.findCoordinate(coordinateQuery);
-
-    expect(longitude).toBeCloseTo(127.126824, 6);
-    expect(latitude).toBeCloseTo(37.409579, 6);
+    await expect(service.findCoordinate(coordinateQuery)).resolves.toEqual({
+      longitude: expect.closeTo(127.126824, 6),
+      latitude: expect.closeTo(37.409579, 6),
+    });
   });
 
-  it("좌표 결과가 없으면 404 로 바꾼다", async () => {
+  it("좌표 결과가 없으면 null 을 돌려준다", async () => {
     get.mockResolvedValue(createCoordinateResponse([]));
 
-    await expect(service.findCoordinate(coordinateQuery)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.findCoordinate(coordinateQuery)).resolves.toBeNull();
   });
 
   it("좌표제공 API 서비스 문제 코드는 좌표 조회 실패 문구와 함께 502 로 바꾼다", async () => {

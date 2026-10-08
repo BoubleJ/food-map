@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import type {
   AddressLookupOutput,
   AddressLookupPlace,
@@ -16,7 +16,7 @@ export class AddressLookupService {
   constructor(private readonly addressSearchService: AddressSearchService) {}
 
   async lookup(places: AddressLookupPlace[]): Promise<AddressLookupOutput> {
-    // 행정안전부 좌표 API 는 짧은 시간에 호출이 몰리면 E0007 을 돌려주므로 순서대로 조회한다
+    // 행정안전부 좌표 API 는 짧은 시간에 호출이 몰리면 E0007 에러를 반환하므로 순서대로 조회한다
     const results = await Array.fromAsync(places, (place) => this.lookupPlace(place));
     return { results };
   }
@@ -40,12 +40,8 @@ export class AddressLookupService {
     if (!address) return null;
 
     const { coordinateQuery, ...addressFields } = address;
-    try {
-      const coordinate = await this.addressSearchService.findCoordinate(coordinateQuery);
-      return { ...addressFields, ...coordinate };
-    } catch (error) {
-      if (error instanceof NotFoundException) return null;
-      throw error;
-    }
+    const coordinate = await this.addressSearchService.findCoordinate(coordinateQuery);
+    if (!coordinate) return null;
+    return { ...addressFields, ...coordinate };
   }
 }

@@ -123,21 +123,18 @@ export class PlaceSearchService {
   }
 
   private async requestKeywordSearch({ keyword, page, rect }: KeywordSearchParams) {
-    try {
-      const { data } = await this.kakaoLocal.get<KakaoKeywordSearchResponse>(
-        "/v2/local/search/keyword.json",
-        {
-          query: {
-            query: keyword,
-            size: KAKAO_PAGE_SIZE,
-            page,
-            ...(rect && { rect: toRectQuery(rect) }),
-          },
+    const { data } = await this.kakaoLocal
+      .get<KakaoKeywordSearchResponse>("/v2/local/search/keyword.json", {
+        query: {
+          query: keyword,
+          size: KAKAO_PAGE_SIZE,
+          page,
+          ...(rect && { rect: toRectQuery(rect) }),
         },
-      );
-      return data;
-    } catch (error) {
-      throw toHttpException(error);
-    }
+      })
+      .catch((error: unknown) => {
+        throw toHttpException(error);
+      });
+    return data;
   }
 }

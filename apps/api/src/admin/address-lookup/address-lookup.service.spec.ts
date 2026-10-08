@@ -1,8 +1,4 @@
-import {
-  BadGatewayException,
-  NotFoundException,
-  ServiceUnavailableException,
-} from "@nestjs/common";
+import { BadGatewayException, ServiceUnavailableException } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AddressLookupService } from "@/admin/address-lookup/address-lookup.service";
@@ -123,7 +119,7 @@ describe("AddressLookupService", () => {
 
   it("좌표를 찾지 못하면 notFound 로 돌려준다", async () => {
     searchAddress.mockResolvedValue([createAddress({})]);
-    findCoordinate.mockRejectedValue(new NotFoundException());
+    findCoordinate.mockResolvedValue(null);
 
     const { results } = await service.lookup([createPlace({})]);
 

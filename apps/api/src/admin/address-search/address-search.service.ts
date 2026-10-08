@@ -1,9 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
-  HttpStatus,
   Injectable,
-  NotFoundException,
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -25,15 +23,12 @@ interface JusoSearchItem {
   buldSlno: string;
 }
 
-interface JusoCoordinateQuery {
-  admCd: string;
-  rnMgtSn: string;
-  udrtYn: string;
-  buldMnnm: string;
-  buldSlno: string;
-}
+type JusoCoordinateQuery = Pick<
+  JusoSearchItem,
+  "admCd" | "rnMgtSn" | "udrtYn" | "buldMnnm" | "buldSlno"
+>;
 
-interface AddressSearchResult {
+interface AddressCandidate {
   roadAddress: string;
   jibunAddress: string;
   regionSido: string;
@@ -58,7 +53,6 @@ interface JusoRequestParams {
   path: string;
   query: Record<string, string | number>;
   failureMessage: string;
-  retryCount?: number;
 }
 
 interface JusoCoordinateItem {
@@ -73,8 +67,6 @@ interface AddressCoordinate {
 
 export const JUSO_CLIENT = "juso";
 
-type JusoErrorStatus = HttpStatus.BAD_REQUEST | HttpStatus.BAD_GATEWAY;
-
 const JUSO_SUCCESS_CODE = "0";
 
 const JUSO_TOO_MANY_REQUESTS_CODE = "E0007";
@@ -87,29 +79,24 @@ const MAX_TOO_MANY_REQUESTS_RETRIES = 3;
 const UTM_K =
   "+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs";
 
-const JUSO_ERROR_STATUS: Record<string, JusoErrorStatus> = {
-  "-999": HttpStatus.BAD_GATEWAY,
-  E0001: HttpStatus.BAD_GATEWAY,
-  E0005: HttpStatus.BAD_REQUEST,
-  E0006: HttpStatus.BAD_REQUEST,
-  E0008: HttpStatus.BAD_REQUEST,
-  E0009: HttpStatus.BAD_REQUEST,
-  E0010: HttpStatus.BAD_REQUEST,
-  E0011: HttpStatus.BAD_REQUEST,
-  E0012: HttpStatus.BAD_REQUEST,
-  E0013: HttpStatus.BAD_REQUEST,
-  E0014: HttpStatus.BAD_GATEWAY,
-  E0015: HttpStatus.BAD_REQUEST,
-};
+const JUSO_BAD_REQUEST_CODES = new Set([
+  "E0005",
+  "E0006",
+  "E0008",
+  "E0009",
+  "E0010",
+  "E0011",
+  "E0012",
+  "E0013",
+  "E0015",
+]);
 
 function createJusoException(
   { errorCode, errorMessage }: JusoSearchStatus,
   failureMessage: string,
 ) {
-  const status = JUSO_ERROR_STATUS[errorCode] ?? HttpStatus.BAD_GATEWAY;
-  return status === HttpStatus.BAD_REQUEST
-    ? new BadRequestException(errorMessage)
-    : new BadGatewayException(failureMessage);
+  if (JUSO_BAD_REQUEST_CODES.has(errorCode)) return new BadRequestException(errorMessage);
+  return new BadGatewayException(failureMessage);
 }
 
 function wait(ms: number) {
@@ -130,7 +117,7 @@ export class AddressSearchService {
     private readonly config: ConfigService<Env, true>,
   ) {}
 
-  async search(keyword: string): Promise<AddressSearchResult[]> {
+  async search(keyword: string): Promise<AddressCandidate[]> {
     const juso = await this.request<JusoSearchItem>({
       path: "/addrlink/addrLinkApi.do",
       query: {
@@ -166,13 +153,13 @@ export class AddressSearchService {
     );
   }
 
-  async findCoordinate(query: JusoCoordinateQuery): Promise<AddressCoordinate> {
+  async findCoordinate(query: JusoCoordinateQuery): Promise<AddressCoordinate | null> {
     const [coordinate] = await this.request<JusoCoordinateItem>({
       path: "/addrlink/addrCoordApi.do",
       query: { confmKey: this.config.get("JUSO_COORD_API_KEY", { infer: true }), ...query },
       failureMessage: "주소 좌표 조회에 실패했습니다.",
     });
-    if (!coordinate) throw new NotFoundException("주소의 좌표를 찾을 수 없습니다.");
+    if (!coordinate) return null;
 
     const [longitude, latitude] = proj4(UTM_K, "WGS84", [
       Number(coordinate.entX),
@@ -181,32 +168,20 @@ export class AddressSearchService {
     return { longitude, latitude };
   }
 
-  private async request<T>({
-    path,
-    query,
-    failureMessage,
-    retryCount = 0,
-  }: JusoRequestParams): Promise<T[]> {
-    let data: JusoResponse<T>;
-    try {
-      ({ data } = await this.juso.get<JusoResponse<T>>(path, {
-        query: { ...query, resultType: "json" },
-      }));
-    } catch (error) {
-      throw toHttpException(error);
-    }
+  private async request<T>({ path, query, failureMessage }: JusoRequestParams): Promise<T[]> {
+    for (let attempt = 0; attempt <= MAX_TOO_MANY_REQUESTS_RETRIES; attempt++) {
+      if (attempt > 0) await wait(TOO_MANY_REQUESTS_RETRY_DELAY_MS);
 
-    const { common, juso } = data.results;
-    if (common.errorCode === JUSO_TOO_MANY_REQUESTS_CODE) {
-      if (retryCount >= MAX_TOO_MANY_REQUESTS_RETRIES) {
-        throw new ServiceUnavailableException(
-          "주소 조회 요청이 많습니다. 잠시 후 다시 시도해 주세요.",
-        );
-      }
-      await wait(TOO_MANY_REQUESTS_RETRY_DELAY_MS);
-      return this.request({ path, query, failureMessage, retryCount: retryCount + 1 });
+      const { data } = await this.juso
+        .get<JusoResponse<T>>(path, { query: { ...query, resultType: "json" } })
+        .catch((error: unknown) => {
+          throw toHttpException(error);
+        });
+      const { common, juso } = data.results;
+      if (common.errorCode === JUSO_TOO_MANY_REQUESTS_CODE) continue;
+      if (common.errorCode !== JUSO_SUCCESS_CODE) throw createJusoException(common, failureMessage);
+      return juso ?? [];
     }
-    if (common.errorCode !== JUSO_SUCCESS_CODE) throw createJusoException(common, failureMessage);
-    return juso ?? [];
+    throw new ServiceUnavailableException("주소 조회 요청이 많습니다. 잠시 후 다시 시도해 주세요.");
   }
 }
