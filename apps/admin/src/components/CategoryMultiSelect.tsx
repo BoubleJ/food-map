@@ -17,10 +17,6 @@ const CATEGORY_OPTIONS = RESTAURANT_CATEGORIES.map((category) => ({
 }));
 
 export function CategoryMultiSelect({ value, error, onChange }: CategoryMultiSelectProps) {
-  const handleChange = (categories: RestaurantCategory[]) => {
-    onChange(categories);
-  };
-
   return (
     <MultiSelect<RestaurantCategory>
       label="카테고리"
@@ -32,7 +28,7 @@ export function CategoryMultiSelect({ value, error, onChange }: CategoryMultiSel
       data={CATEGORY_OPTIONS}
       value={value}
       error={error}
-      onChange={handleChange}
+      onChange={onChange}
     />
   );
 }

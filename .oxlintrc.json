@@ -135,7 +135,7 @@
         "react/jsx-handler-names": [
           "error",
           {
-            "eventHandlerPrefix": "handle",
+            "eventHandlerPrefix": "handle|on",
             "eventHandlerPropPrefix": "on",
             "checkLocalVariables": true,
             "checkInlineFunction": false
