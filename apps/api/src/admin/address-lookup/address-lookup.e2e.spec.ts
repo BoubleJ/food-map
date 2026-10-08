@@ -32,7 +32,6 @@ function createPlace(kakaoPlaceId: string) {
   return {
     kakaoPlaceId,
     roadAddress: "경기 성남시 분당구 야탑로 72",
-    jibunAddress: "경기 성남시 분당구 야탑동 503",
   };
 }
 
@@ -131,6 +130,7 @@ describe("POST /api/admin/address-lookups", () => {
 
   it.each([
     ["식당이 없으면", { places: [] }],
+    ["도로명 주소가 비어 있으면", { places: [{ kakaoPlaceId: "1", roadAddress: "" }] }],
     [
       "식당이 10곳을 넘으면",
       { places: Array.from({ length: 11 }, (_, index) => createPlace(String(index))) },

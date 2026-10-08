@@ -7,8 +7,6 @@ import type {
 } from "@food-map/shared/admin/address-lookup";
 import { AddressSearchService } from "@/admin/address-search/address-search.service";
 
-type AddressField = "roadAddress" | "jibunAddress";
-
 function toAddressKey(address: string) {
   return address.split(" ").slice(1).join("");
 }
@@ -26,25 +24,19 @@ export class AddressLookupService {
   private async lookupPlace({
     kakaoPlaceId,
     roadAddress,
-    jibunAddress,
   }: AddressLookupPlace): Promise<AddressLookupResult> {
-    const field = roadAddress ? "roadAddress" : "jibunAddress";
-    const address = await this.findAddress(roadAddress || jibunAddress, field);
+    const address = await this.findAddress(roadAddress);
     if (!address) return { kakaoPlaceId, status: "notFound" };
     return { kakaoPlaceId, status: "found", address };
   }
 
-  private async findAddress(
-    kakaoAddress: string,
-    field: AddressField,
-  ): Promise<LookedUpAddress | null> {
-    if (!kakaoAddress) return null;
-
-    const addresses = await this.addressSearchService.search(kakaoAddress);
+  private async findAddress(kakaoRoadAddress: string): Promise<LookedUpAddress | null> {
+    const addresses = await this.addressSearchService.search(kakaoRoadAddress);
     const address =
       addresses.find(
-        (candidate) => toAddressKey(candidate[field]) === toAddressKey(kakaoAddress),
-      ) ?? (addresses.length === 1 ? addresses[0] : undefined);
+        ({ roadAddress }) => toAddressKey(roadAddress) === toAddressKey(kakaoRoadAddress),
+      ) ??
+      (addresses.length === 1 && addresses[0]);
     if (!address) return null;
 
     const { coordinateQuery, ...addressFields } = address;

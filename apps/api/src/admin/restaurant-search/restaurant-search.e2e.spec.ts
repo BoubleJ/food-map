@@ -101,7 +101,6 @@ describe("GET /api/admin/restaurant-search", () => {
           categoryName: "음식점 > 일식 > 우동,소바",
           placeUrl: "http://place.map.kakao.com/17131878",
           roadAddress: "경기 성남시 분당구 야탑로 72",
-          jibunAddress: "경기 성남시 분당구 야탑동 503",
           coordinate: { latitude: 37.409579, longitude: 127.126824 },
           isRegistered: false,
         },

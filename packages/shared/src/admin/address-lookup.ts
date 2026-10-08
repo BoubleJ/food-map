@@ -13,8 +13,7 @@ export const lookedUpAddressSchema = z.object({
 
 const addressLookupPlaceSchema = z.object({
   kakaoPlaceId: z.string().min(1),
-  roadAddress: z.string(),
-  jibunAddress: z.string(),
+  roadAddress: z.string().min(1),
 });
 
 const addressLookupInputSchema = z.object({

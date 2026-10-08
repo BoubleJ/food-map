@@ -10,7 +10,6 @@ function createPlace(kakaoPlaceId: string) {
     name: "수타우동겐 본점",
     categoryName: "음식점 > 일식 > 우동,소바",
     roadAddress: "경기 성남시 분당구 야탑로 72",
-    jibunAddress: "경기 성남시 분당구 야탑동 503",
     placeUrl: `http://place.map.kakao.com/${kakaoPlaceId}`,
     coordinate: { latitude: 37.409579, longitude: 127.126824 },
   };

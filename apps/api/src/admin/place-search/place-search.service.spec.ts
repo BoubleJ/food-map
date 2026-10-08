@@ -67,7 +67,6 @@ describe("PlaceSearchService", () => {
         name: "수타우동겐 본점",
         categoryName: "음식점 > 일식 > 우동,소바",
         roadAddress: "경기 성남시 분당구 야탑로 72",
-        jibunAddress: "경기 성남시 분당구 야탑동 503",
         placeUrl: "http://place.map.kakao.com/17131878",
         coordinate: { latitude: 37.409579, longitude: 127.126824 },
       },
@@ -103,6 +102,19 @@ describe("PlaceSearchService", () => {
     const places = await service.search("수타우동겐");
 
     expect(places.map(({ kakaoPlaceId }) => kakaoPlaceId)).toEqual(["1", "2"]);
+  });
+
+  it("도로명 주소가 없는 장소는 뺀다", async () => {
+    get.mockResolvedValue(
+      createKakaoResponse([
+        createKakaoPlace({ id: "1" }),
+        createKakaoPlace({ id: "2", road_address_name: "" }),
+      ]),
+    );
+
+    const places = await service.search("포장마차");
+
+    expect(places.map(({ kakaoPlaceId }) => kakaoPlaceId)).toEqual(["1"]);
   });
 
   it("마지막 페이지가 아니면 3페이지까지 이어서 받는다", async () => {

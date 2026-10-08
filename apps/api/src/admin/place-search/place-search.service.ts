@@ -8,7 +8,6 @@ interface KakaoPlaceDocument {
   category_group_code: string;
   category_name: string;
   road_address_name: string;
-  address_name: string;
   place_url: string;
   x: string;
   y: string;
@@ -83,20 +82,18 @@ export class PlaceSearchService {
     const uniqueDocuments = new Map(documents.map((document) => [document.id, document]));
 
     return [...uniqueDocuments.values()]
-      .filter(({ category_group_code }) =>
-        RESTAURANT_CATEGORY_GROUP_CODES.includes(category_group_code),
+      .filter(
+        ({ category_group_code, road_address_name }) =>
+          RESTAURANT_CATEGORY_GROUP_CODES.includes(category_group_code) && road_address_name !== "",
       )
-      .map(
-        ({ id, place_name, category_name, road_address_name, address_name, place_url, x, y }) => ({
-          kakaoPlaceId: id,
-          name: place_name,
-          categoryName: category_name,
-          roadAddress: road_address_name,
-          jibunAddress: address_name,
-          placeUrl: place_url,
-          coordinate: { latitude: Number(y), longitude: Number(x) },
-        }),
-      );
+      .map(({ id, place_name, category_name, road_address_name, place_url, x, y }) => ({
+        kakaoPlaceId: id,
+        name: place_name,
+        categoryName: category_name,
+        roadAddress: road_address_name,
+        placeUrl: place_url,
+        coordinate: { latitude: Number(y), longitude: Number(x) },
+      }));
   }
 
   private async searchInRect({

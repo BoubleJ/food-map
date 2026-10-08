@@ -20,7 +20,6 @@ function createPlace(overrides: Record<string, string>) {
   return {
     kakaoPlaceId: "17131878",
     roadAddress: "경기 성남시 분당구 야탑로 72",
-    jibunAddress: "경기 성남시 분당구 야탑동 503",
     ...overrides,
   };
 }
@@ -78,21 +77,6 @@ describe("AddressLookupService", () => {
     expect(findCoordinate).toHaveBeenCalledWith(coordinateQuery);
   });
 
-  it("카카오 도로명 주소가 없으면 지번 주소로 주소를 검색한다", async () => {
-    searchAddress.mockResolvedValue([createAddress({})]);
-
-    await service.lookup([createPlace({ roadAddress: "" })]);
-
-    expect(searchAddress).toHaveBeenCalledWith("경기 성남시 분당구 야탑동 503");
-  });
-
-  it("카카오 도로명 주소와 지번 주소가 모두 없으면 검색하지 않고 notFound 로 돌려준다", async () => {
-    const { results } = await service.lookup([createPlace({ roadAddress: "", jibunAddress: "" })]);
-
-    expect(results).toEqual([{ kakaoPlaceId: "17131878", status: "notFound" }]);
-    expect(searchAddress).not.toHaveBeenCalled();
-  });
-
   it("주소 검색 결과가 여러 개면 시도를 뺀 도로명 주소가 카카오 주소와 같은 결과를 고른다", async () => {
     searchAddress.mockResolvedValue([
       createAddress({
@@ -103,20 +87,6 @@ describe("AddressLookupService", () => {
     ]);
 
     const { results } = await service.lookup([createPlace({})]);
-
-    expect(results[0]).toMatchObject({ address: { regionEupmyeondong: "야탑동" } });
-  });
-
-  it("지번 주소로 검색했을 때는 시도를 뺀 지번 주소가 같은 결과를 고른다", async () => {
-    searchAddress.mockResolvedValue([
-      createAddress({
-        jibunAddress: "경기도 성남시 분당구 야탑동 503-1",
-        regionEupmyeondong: "다른동",
-      }),
-      createAddress({}),
-    ]);
-
-    const { results } = await service.lookup([createPlace({ roadAddress: "" })]);
 
     expect(results[0]).toMatchObject({ address: { regionEupmyeondong: "야탑동" } });
   });

@@ -17,7 +17,6 @@ const restaurantCandidateSchema = z.object({
   categoryName: z.string(),
   placeUrl: z.string(),
   roadAddress: z.string(),
-  jibunAddress: z.string(),
   coordinate: coordinateSchema,
   isRegistered: z.boolean(),
 });
