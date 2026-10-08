@@ -19,6 +19,7 @@ export class AddressLookupService {
 
   async lookup(places: AddressLookupPlace[]): Promise<AddressLookupOutput> {
     const results: AddressLookupResult[] = [];
+    // 행정안전부 좌표 API 는 짧은 시간에 호출이 몰리면 E0007 을 돌려주므로 순서대로 조회한다
     for (const place of places) {
       results.push(await this.lookupPlace(place));
     }
