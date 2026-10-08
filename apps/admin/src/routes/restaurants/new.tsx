@@ -6,6 +6,7 @@ import { RestaurantRegisterHeader } from "@/routes/restaurants/-components/Resta
 
 const restaurantRegisterSearchSchema = z.object({
   keyword: z.string().trim().min(1).max(40).optional().catch(undefined),
+  panel: z.literal("form").optional().catch(undefined),
 });
 
 export const Route = createFileRoute("/restaurants/new")({
