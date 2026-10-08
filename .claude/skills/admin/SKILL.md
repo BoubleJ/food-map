@@ -96,7 +96,7 @@ function isAdult(status: string | null | undefined) {
 }
 ```
 
-예외: 추론 결과가 의도와 다를 때, 공개 API의 복잡한 반환 타입, 재귀 함수.
+예외: 추론 결과가 의도와 다를 때, 재귀 함수, 반환 값의 타입 이름을 보여 줘야 할 때(추론하면 객체 리터럴 모양으로 풀리는 경우).
 
 ### 타입 colocation
 

@@ -5,7 +5,7 @@ description: >
   apps/api/src 아래의 .ts 파일, drizzle.config.ts, 관련 테스트 코드를 다룰 때 사용한다.
 ---
 
-# api 코드 배치 규칙
+# api 코딩 규칙
 
 폴더 구조, 파일 이름, 폴더별 export 종류, import 범위는 oxlint(`.oxlintrc.json` 의 `apps/api/**` override)와 `scripts/check-api-structure.sh` 가 검사한다. 아래는 도구로 검사할 수 없는 규칙이다.
 
@@ -15,3 +15,23 @@ description: >
 - 한 기능 안의 여러 파일이 쓰면 그 기능 폴더의 `utils/`, `constants/`, `types/` 로 옮긴다.
 - 여러 기능이 쓰면 `src/_common/` 아래 같은 이름의 폴더로 옮긴다. 두 기능에 같은 코드를 복사해 두지 않는다.
 - api 와 web, admin 이 함께 쓰면 `packages/shared` 로 옮긴다.
+
+## 타입 추론 우선
+
+TypeScript 가 타입을 추론할 수 있으면 반환 타입을 적지 않는다.
+
+```ts
+// ❌ BAD
+private async requestKeywordSearch(params: KeywordSearchParams): Promise<KakaoKeywordSearchResponse> {
+  const { data } = await this.kakaoLocal.get<KakaoKeywordSearchResponse>(path, { query });
+  return data;
+}
+
+// ✅ GOOD
+private async requestKeywordSearch(params: KeywordSearchParams) {
+  const { data } = await this.kakaoLocal.get<KakaoKeywordSearchResponse>(path, { query });
+  return data;
+}
+```
+
+예외: 추론 결과가 의도와 다를 때, 재귀 함수, 반환 값의 타입 이름을 보여 줘야 할 때(`search(): Promise<AddressCandidate[]>` 처럼 추론하면 객체 리터럴 모양으로 풀리는 경우).
