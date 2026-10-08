@@ -112,6 +112,7 @@ function isAdult(status: string | null | undefined) {
 - 스키마 이름은 `*FormSchema`, 추론된 값 타입은 `*FormValues`로 짓는다.
 - API 요청 함수를 따로 만들지 않는다. `@/utils/orpc` 의 `orpc` 에서 `call`, `queryOptions`, `infiniteOptions`, `mutationOptions`, `key` 를 꺼내 쓰는 컴포넌트에서 바로 쓴다 (예: `useSuspenseInfiniteQuery(orpc.admin.restaurantSearch.infiniteOptions(...))`).
 - 같은 query 설정을 여러 곳에서 쓰게 되어 훅으로 묶을 때는 `useGet~` 패턴을 사용한다 (예: `useGetRestaurantSearch`).
+- mutation 훅은 `use~Mutation` 패턴을 사용한다 (예: `useRegisterRestaurantsMutation`).
 - 한 곳에서만 쓰이는 보조 함수는 공용 유틸로 올리지 않고 해당 모듈 내부에 둔다.
 - 상수나 직접 분기만으로 충분히 읽히는 경우 의미 없는 중간 추상화는 추가하지 않는다.
 

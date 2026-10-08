@@ -3,7 +3,7 @@ import { getErrorMessage } from "@/utils/error";
 import { showErrorNotification } from "@/utils/notification";
 import { orpc } from "@/utils/orpc";
 
-export function useLookupAddresses() {
+export function useLookupAddressesMutation() {
   return useMutation(
     orpc.admin.addressLookup.mutationOptions({
       onError: (error) => {

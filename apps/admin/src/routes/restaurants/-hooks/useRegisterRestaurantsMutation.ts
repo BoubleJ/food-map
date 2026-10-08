@@ -4,11 +4,13 @@ import { getErrorMessage } from "@/utils/error";
 import { showErrorNotification, showSuccessNotification } from "@/utils/notification";
 import { orpc } from "@/utils/orpc";
 
-interface UseRegisterRestaurantsParams {
+interface UseRegisterRestaurantsMutationParams {
   onConflict: (kakaoPlaceIds: string[]) => void;
 }
 
-export function useRegisterRestaurants({ onConflict }: UseRegisterRestaurantsParams) {
+export function useRegisterRestaurantsMutation({
+  onConflict,
+}: UseRegisterRestaurantsMutationParams) {
   const queryClient = useQueryClient();
 
   return useMutation(
