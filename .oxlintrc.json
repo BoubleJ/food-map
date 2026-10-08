@@ -103,6 +103,11 @@
                 "name": "react",
                 "importNames": ["default", "memo", "useMemo", "useCallback"],
                 "message": "memo, useMemo, useCallback 을 쓰지 않는다. default import 는 React.useMemo 로 우회할 수 있어 같이 막는다."
+              },
+              {
+                "name": "react",
+                "importNames": ["ReactNode"],
+                "message": "ReactNode 대신 ReactElement 를 쓴다. children 은 PropsWithChildren 을 쓴다."
               }
             ]
           }
