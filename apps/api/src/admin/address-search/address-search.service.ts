@@ -54,6 +54,13 @@ interface JusoResponse<T> {
   };
 }
 
+interface JusoRequestParams {
+  path: string;
+  query: Record<string, string | number>;
+  failureMessage: string;
+  retryCount?: number;
+}
+
 interface JusoCoordinateItem {
   entX: string;
   entY: string;
@@ -124,16 +131,16 @@ export class AddressSearchService {
   ) {}
 
   async search(keyword: string): Promise<AddressSearchResult[]> {
-    const juso = await this.request<JusoSearchItem>(
-      "/addrlink/addrLinkApi.do",
-      {
+    const juso = await this.request<JusoSearchItem>({
+      path: "/addrlink/addrLinkApi.do",
+      query: {
         confmKey: this.config.get("JUSO_SEARCH_API_KEY", { infer: true }),
         keyword,
         currentPage: 1,
         countPerPage: 20,
       },
-      "주소 검색에 실패했습니다.",
-    );
+      failureMessage: "주소 검색에 실패했습니다.",
+    });
 
     return juso.map(
       ({
@@ -160,11 +167,11 @@ export class AddressSearchService {
   }
 
   async findCoordinate(query: JusoCoordinateQuery): Promise<AddressCoordinate> {
-    const [coordinate] = await this.request<JusoCoordinateItem>(
-      "/addrlink/addrCoordApi.do",
-      { confmKey: this.config.get("JUSO_COORD_API_KEY", { infer: true }), ...query },
-      "주소 좌표 조회에 실패했습니다.",
-    );
+    const [coordinate] = await this.request<JusoCoordinateItem>({
+      path: "/addrlink/addrCoordApi.do",
+      query: { confmKey: this.config.get("JUSO_COORD_API_KEY", { infer: true }), ...query },
+      failureMessage: "주소 좌표 조회에 실패했습니다.",
+    });
     if (!coordinate) throw new NotFoundException("주소의 좌표를 찾을 수 없습니다.");
 
     const [longitude, latitude] = proj4(UTM_K, "WGS84", [
@@ -174,12 +181,12 @@ export class AddressSearchService {
     return { longitude, latitude };
   }
 
-  private async request<T>(
-    path: string,
-    query: Record<string, string | number>,
-    failureMessage: string,
+  private async request<T>({
+    path,
+    query,
+    failureMessage,
     retryCount = 0,
-  ): Promise<T[]> {
+  }: JusoRequestParams): Promise<T[]> {
     let data: JusoResponse<T>;
     try {
       ({ data } = await this.juso.get<JusoResponse<T>>(path, {
@@ -197,7 +204,7 @@ export class AddressSearchService {
         );
       }
       await wait(TOO_MANY_REQUESTS_RETRY_DELAY_MS);
-      return this.request(path, query, failureMessage, retryCount + 1);
+      return this.request({ path, query, failureMessage, retryCount: retryCount + 1 });
     }
     if (common.errorCode !== JUSO_SUCCESS_CODE) throw createJusoException(common, failureMessage);
     return juso ?? [];

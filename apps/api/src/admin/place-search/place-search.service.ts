@@ -32,6 +32,18 @@ interface Rect {
   maxY: number;
 }
 
+interface SearchInRectParams {
+  keyword: string;
+  rect?: Rect;
+  depth: number;
+}
+
+interface KeywordSearchParams {
+  keyword: string;
+  page: number;
+  rect?: Rect;
+}
+
 type PlaceCandidate = Omit<RestaurantCandidate, "isRegistered">;
 
 export const KAKAO_LOCAL_CLIENT = "kakao-local";
@@ -67,7 +79,7 @@ export class PlaceSearchService {
   constructor(@InjectHttpClient(KAKAO_LOCAL_CLIENT) private readonly kakaoLocal: HttpClient) {}
 
   async search(keyword: string): Promise<PlaceCandidate[]> {
-    const documents = await this.searchInRect(keyword, undefined, 0);
+    const documents = await this.searchInRect({ keyword, depth: 0 });
     const uniqueDocuments = new Map(documents.map((document) => [document.id, document]));
 
     return [...uniqueDocuments.values()]
@@ -87,31 +99,33 @@ export class PlaceSearchService {
       );
   }
 
-  private async searchInRect(
-    keyword: string,
-    rect: Rect | undefined,
-    depth: number,
-  ): Promise<KakaoPlaceDocument[]> {
-    const { meta, documents } = await this.requestKeywordSearch(keyword, 1, rect);
+  private async searchInRect({
+    keyword,
+    rect,
+    depth,
+  }: SearchInRectParams): Promise<KakaoPlaceDocument[]> {
+    const { meta, documents } = await this.requestKeywordSearch({ keyword, page: 1, rect });
 
     if (meta.total_count > meta.pageable_count && depth < MAX_SPLIT_DEPTH) {
       const childDocuments: KakaoPlaceDocument[] = [];
       for (const childRect of splitRect(rect ?? KOREA_RECT)) {
-        childDocuments.push(...(await this.searchInRect(keyword, childRect, depth + 1)));
+        childDocuments.push(
+          ...(await this.searchInRect({ keyword, rect: childRect, depth: depth + 1 })),
+        );
       }
       return childDocuments;
     }
 
     let isEnd = meta.is_end;
     for (let page = 2; !isEnd && page <= KAKAO_MAX_PAGE; page++) {
-      const nextPage = await this.requestKeywordSearch(keyword, page, rect);
+      const nextPage = await this.requestKeywordSearch({ keyword, page, rect });
       documents.push(...nextPage.documents);
       isEnd = nextPage.meta.is_end;
     }
     return documents;
   }
 
-  private async requestKeywordSearch(keyword: string, page: number, rect: Rect | undefined) {
+  private async requestKeywordSearch({ keyword, page, rect }: KeywordSearchParams) {
     try {
       const { data } = await this.kakaoLocal.get<KakaoKeywordSearchResponse>(
         "/v2/local/search/keyword.json",
