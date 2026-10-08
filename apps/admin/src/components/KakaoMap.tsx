@@ -12,6 +12,7 @@ interface KakaoMapProps {
   defaultCenter?: Coordinate;
   defaultLevel?: number;
   onCreate?: (map: kakao.maps.Map) => void;
+  onZoomChanged?: (level: number) => void;
 }
 
 const SEOUL_CITY_HALL: Coordinate = { latitude: 37.5665, longitude: 126.978 };
@@ -21,6 +22,7 @@ export function KakaoMap({
   defaultCenter = SEOUL_CITY_HALL,
   defaultLevel = 7,
   onCreate,
+  onZoomChanged,
   children,
 }: PropsWithChildren<KakaoMapProps>) {
   const [isLoading, error] = useKakaoLoader({ appkey: import.meta.env.VITE_KAKAO_JS_KEY });
@@ -49,6 +51,10 @@ export function KakaoMap({
     onCreate?.(createdMap);
   };
 
+  const handleZoomChanged = (target: kakao.maps.Map) => {
+    onZoomChanged?.(target.getLevel());
+  };
+
   if (error) {
     return (
       <Center h="100%">
@@ -64,6 +70,7 @@ export function KakaoMap({
       center={{ lat: defaultCenter.latitude, lng: defaultCenter.longitude }}
       level={defaultLevel}
       onCreate={handleCreate}
+      onZoomChanged={handleZoomChanged}
       style={{ width: "100%", height: "100%" }}
     >
       {children}

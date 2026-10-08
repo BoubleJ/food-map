@@ -7,6 +7,7 @@ export function RestaurantRegisterHeader() {
   const navigate = useNavigate({ from: "/restaurants/new" });
 
   const handleSearch = (nextKeyword: string) => {
+    if (nextKeyword === keyword) return;
     navigate({ search: { keyword: nextKeyword } });
   };
 

@@ -5,7 +5,7 @@ import { PLACE_MARKER_Z_INDEX } from "@/constants/zindex";
 
 type PlaceMarkerVariant = "default" | "selected" | "registered" | "address";
 
-type PlaceMarkerShape = "bubble" | "dot";
+export type PlaceMarkerShape = "bubble" | "dot";
 
 interface PlaceMarkerProps {
   name: string;
