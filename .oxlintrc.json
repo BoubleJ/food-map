@@ -68,9 +68,16 @@
         ]
       }
     ],
-    "food-map/no-restaurant-value-union": "error"
+    "food-map/no-restaurant-value-union": "error",
+    "food-map/prefer-object-params": "error"
   },
   "overrides": [
+    {
+      "files": ["packages/oxlint-plugin/src/rule-tester.ts"],
+      "rules": {
+        "food-map/prefer-object-params": "off"
+      }
+    },
     {
       "files": ["packages/**"],
       "rules": {

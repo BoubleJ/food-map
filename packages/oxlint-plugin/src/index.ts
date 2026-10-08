@@ -6,6 +6,7 @@ import { noForeignInternalImport } from "./rules/no-foreign-internal-import.ts";
 import { noNestedTypeLiteral } from "./rules/no-nested-type-literal.ts";
 import { noRestaurantValueUnion } from "./rules/no-restaurant-value-union.ts";
 import { noTypePrefix } from "./rules/no-type-prefix.ts";
+import { preferObjectParams } from "./rules/prefer-object-params.ts";
 import { preferPropsWithChildren } from "./rules/prefer-props-with-children.ts";
 
 const plugin = definePlugin({
@@ -18,6 +19,7 @@ const plugin = definePlugin({
     "no-nested-type-literal": noNestedTypeLiteral,
     "no-restaurant-value-union": noRestaurantValueUnion,
     "no-type-prefix": noTypePrefix,
+    "prefer-object-params": preferObjectParams,
     "prefer-props-with-children": preferPropsWithChildren,
   },
 });
