@@ -34,14 +34,18 @@ function createBody(overrides: object = {}) {
 }
 
 describe("POST /api/admin/restaurants", () => {
-  const findRegistered = vi.fn<() => Promise<{ kakaoPlaceId: string | null }[]>>();
-  const insertValues = vi.fn<(values: object[]) => Promise<void>>();
+  const insertValues = vi.fn<(values: { kakaoPlaceId: string }[]) => void>();
+  const returnInserted = vi.fn<() => Promise<{ kakaoPlaceId: string | null }[]>>();
   let app: INestApplication;
 
   beforeAll(async () => {
-    const transaction = {
-      select: () => ({ from: () => ({ where: findRegistered }) }),
-      insert: () => ({ values: insertValues }),
+    const mockTransaction = {
+      insert: () => ({
+        values: (values: { kakaoPlaceId: string }[]) => {
+          insertValues(values);
+          return { onConflictDoNothing: () => ({ returning: returnInserted }) };
+        },
+      }),
     };
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -60,9 +64,8 @@ describe("POST /api/admin/restaurants", () => {
         AdminModule,
         DrizzleModule.forRoot({
           db: {
-            ...transaction,
-            transaction: (callback: (tx: typeof transaction) => Promise<unknown>) =>
-              callback(transaction),
+            transaction: (callback: (transaction: typeof mockTransaction) => Promise<unknown>) =>
+              callback(mockTransaction),
           },
           autoCloseConnection: false,
         }),
@@ -79,10 +82,11 @@ describe("POST /api/admin/restaurants", () => {
   });
 
   beforeEach(() => {
-    findRegistered.mockReset();
-    findRegistered.mockResolvedValue([]);
     insertValues.mockReset();
-    insertValues.mockResolvedValue();
+    returnInserted.mockReset();
+    returnInserted.mockImplementation(async () =>
+      (insertValues.mock.lastCall?.[0] ?? []).map(({ kakaoPlaceId }) => ({ kakaoPlaceId })),
+    );
   });
 
   it("식당을 저장하고 201 과 등록한 카카오 장소 ID 로 응답한다", async () => {
@@ -96,11 +100,11 @@ describe("POST /api/admin/restaurants", () => {
   });
 
   it("이미 등록된 식당이 있으면 409 와 그 카카오 장소 ID 를 oRPC 에러 형식으로 응답한다", async () => {
-    findRegistered.mockResolvedValue([{ kakaoPlaceId: "1" }]);
+    returnInserted.mockResolvedValue([{ kakaoPlaceId: "2" }]);
 
     const response = await request(app.getHttpServer())
       .post("/api/admin/restaurants")
-      .send(createBody())
+      .send(createBody({ restaurants: [createRestaurant("1"), createRestaurant("2")] }))
       .expect(409);
 
     expect(response.body).toEqual({
@@ -110,7 +114,6 @@ describe("POST /api/admin/restaurants", () => {
       message: "이미 등록된 식당이 있습니다.",
       data: { kakaoPlaceIds: ["1"] },
     });
-    expect(insertValues).not.toHaveBeenCalled();
   });
 
   it.each([

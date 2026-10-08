@@ -2,7 +2,6 @@ import { getDrizzleToken } from "@nestjs/drizzle";
 import { Test } from "@nestjs/testing";
 import { ORPCError } from "@orpc/nest";
 import type { RestaurantRegisterInput } from "@food-map/shared/admin/restaurant-register";
-import { DrizzleQueryError } from "drizzle-orm/errors";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RestaurantRegisterService } from "@/admin/restaurant-register/restaurant-register.service";
 
@@ -27,28 +26,23 @@ function createInput(restaurants: RestaurantRegisterInput["restaurants"]): Resta
   return { common: { categories: ["japanese", "udon"], isVisible: true }, restaurants };
 }
 
-function createUniqueViolation() {
-  return new DrizzleQueryError(
-    "insert into restaurants",
-    [],
-    Object.assign(new Error("duplicate key"), { code: "23505" }),
-  );
-}
-
 describe("RestaurantRegisterService", () => {
-  const findRegisteredInTransaction = vi.fn<() => Promise<{ kakaoPlaceId: string | null }[]>>();
-  const findRegistered = vi.fn<() => Promise<{ kakaoPlaceId: string | null }[]>>();
-  const insertValues = vi.fn<(values: object[]) => Promise<void>>();
+  const insertValues = vi.fn<(values: { kakaoPlaceId: string }[]) => void>();
+  const returnInserted = vi.fn<() => Promise<{ kakaoPlaceId: string | null }[]>>();
   let service: RestaurantRegisterService;
 
   beforeEach(async () => {
     vi.resetAllMocks();
-    findRegisteredInTransaction.mockResolvedValue([]);
-    findRegistered.mockResolvedValue([]);
-    insertValues.mockResolvedValue();
-    const transaction = {
-      select: () => ({ from: () => ({ where: findRegisteredInTransaction }) }),
-      insert: () => ({ values: insertValues }),
+    returnInserted.mockImplementation(async () =>
+      (insertValues.mock.lastCall?.[0] ?? []).map(({ kakaoPlaceId }) => ({ kakaoPlaceId })),
+    );
+    const mockTransaction = {
+      insert: () => ({
+        values: (values: { kakaoPlaceId: string }[]) => {
+          insertValues(values);
+          return { onConflictDoNothing: () => ({ returning: returnInserted }) };
+        },
+      }),
     };
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -56,9 +50,8 @@ describe("RestaurantRegisterService", () => {
         {
           provide: getDrizzleToken(),
           useValue: {
-            transaction: (callback: (tx: typeof transaction) => Promise<unknown>) =>
-              callback(transaction),
-            select: () => ({ from: () => ({ where: findRegistered }) }),
+            transaction: (callback: (transaction: typeof mockTransaction) => Promise<unknown>) =>
+              callback(mockTransaction),
           },
         },
       ],
@@ -97,8 +90,8 @@ describe("RestaurantRegisterService", () => {
     ]);
   });
 
-  it("이미 등록된 식당이 있으면 저장하지 않고 그 카카오 장소 ID 를 담아 CONFLICT 로 던진다", async () => {
-    findRegisteredInTransaction.mockResolvedValue([{ kakaoPlaceId: "2" }]);
+  it("이미 등록되어 저장되지 않은 식당이 있으면 그 카카오 장소 ID 를 담아 CONFLICT 로 던진다", async () => {
+    returnInserted.mockResolvedValue([{ kakaoPlaceId: "1" }]);
 
     const error = await service
       .register(createInput([createRestaurant("1"), createRestaurant("2")]))
@@ -106,23 +99,11 @@ describe("RestaurantRegisterService", () => {
 
     expect(error).toBeInstanceOf(ORPCError);
     expect(error).toMatchObject({ code: "CONFLICT", data: { kakaoPlaceIds: ["2"] } });
-    expect(insertValues).not.toHaveBeenCalled();
-  });
-
-  it("저장 중 같은 카카오 장소 ID 가 먼저 저장되면 다시 조회한 카카오 장소 ID 를 담아 CONFLICT 로 던진다", async () => {
-    insertValues.mockRejectedValue(createUniqueViolation());
-    findRegistered.mockResolvedValue([{ kakaoPlaceId: "1" }]);
-
-    const error = await service
-      .register(createInput([createRestaurant("1"), createRestaurant("2")]))
-      .catch((caught: unknown) => caught);
-
-    expect(error).toMatchObject({ code: "CONFLICT", data: { kakaoPlaceIds: ["1"] } });
   });
 
   it("다른 저장 오류는 그대로 던진다", async () => {
     const failure = new Error("connection closed");
-    insertValues.mockRejectedValue(failure);
+    returnInserted.mockRejectedValue(failure);
 
     await expect(service.register(createInput([createRestaurant("1")]))).rejects.toBe(failure);
   });
