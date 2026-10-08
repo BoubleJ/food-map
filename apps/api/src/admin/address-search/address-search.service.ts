@@ -168,20 +168,28 @@ export class AddressSearchService {
     return { longitude, latitude };
   }
 
-  private async request<T>({ path, query, failureMessage }: JusoRequestParams): Promise<T[]> {
-    for (let attempt = 0; attempt <= MAX_TOO_MANY_REQUESTS_RETRIES; attempt++) {
-      if (attempt > 0) await wait(TOO_MANY_REQUESTS_RETRY_DELAY_MS);
-
+  private request<T>({ path, query, failureMessage }: JusoRequestParams): Promise<T[]> {
+    const attempt = async (retryCount: number): Promise<T[]> => {
       const { data } = await this.juso
         .get<JusoResponse<T>>(path, { query: { ...query, resultType: "json" } })
         .catch((error: unknown) => {
           throw toHttpException(error);
         });
       const { common, juso } = data.results;
-      if (common.errorCode === JUSO_TOO_MANY_REQUESTS_CODE) continue;
+
+      if (common.errorCode === JUSO_TOO_MANY_REQUESTS_CODE) {
+        if (retryCount >= MAX_TOO_MANY_REQUESTS_RETRIES) {
+          throw new ServiceUnavailableException(
+            "주소 조회 요청이 많습니다. 잠시 후 다시 시도해 주세요.",
+          );
+        }
+        await wait(TOO_MANY_REQUESTS_RETRY_DELAY_MS);
+        return attempt(retryCount + 1);
+      }
       if (common.errorCode !== JUSO_SUCCESS_CODE) throw createJusoException(common, failureMessage);
       return juso ?? [];
-    }
-    throw new ServiceUnavailableException("주소 조회 요청이 많습니다. 잠시 후 다시 시도해 주세요.");
+    };
+
+    return attempt(0);
   }
 }
