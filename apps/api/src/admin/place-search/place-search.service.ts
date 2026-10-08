@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { HttpClient, InjectHttpClient, toHttpException } from "@nestjs/http-client";
-import type { RestaurantCandidate } from "@food-map/shared/admin/restaurant-search";
+import type { PlaceCandidate } from "@/admin/types/place-candidate";
 
 interface KakaoPlaceDocument {
   id: string;
@@ -40,8 +40,6 @@ interface KeywordSearchParams {
 interface SearchInRectParams extends Omit<KeywordSearchParams, "page"> {
   depth: number;
 }
-
-type PlaceCandidate = Omit<RestaurantCandidate, "isRegistered">;
 
 export const KAKAO_LOCAL_CLIENT = "kakao-local";
 

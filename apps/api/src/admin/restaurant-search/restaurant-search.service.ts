@@ -1,15 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import type {
-  RestaurantCandidate,
-  RestaurantSearchResult,
-} from "@food-map/shared/admin/restaurant-search";
+import type { RestaurantSearchResult } from "@food-map/shared/admin/restaurant-search";
 import { inArray } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { PlaceSearchService } from "@/admin/place-search/place-search.service";
+import type { PlaceCandidate } from "@/admin/types/place-candidate";
 import { restaurants } from "@/database/schema/restaurant";
-
-type PlaceCandidate = Omit<RestaurantCandidate, "isRegistered">;
 
 interface CachedPlaces {
   places: PlaceCandidate[];
@@ -41,7 +37,7 @@ export class RestaurantSearchService {
     return {
       restaurants: pagePlaces.map((place) => ({
         ...place,
-        isRegistered: registeredPlaceIds.has(place.kakaoPlaceId),
+        isRegistered: registeredPlaceIds.includes(place.kakaoPlaceId),
       })),
       hasNext: places.length > page * PAGE_SIZE,
     };
@@ -49,6 +45,7 @@ export class RestaurantSearchService {
 
   private async findPlaces(keyword: string, page: number) {
     const cached = this.cache.get(keyword);
+    // 1페이지는 새 검색이라 카카오를 다시 호출하고, 2페이지부터는 더 보기라 처음 검색한 결과를 쓴다
     if (page > 1 && cached && cached.expiresAt > Date.now()) return cached.places;
 
     const places = await this.placeSearchService.search(keyword);
@@ -70,12 +67,12 @@ export class RestaurantSearchService {
   }
 
   private async findRegisteredPlaceIds(kakaoPlaceIds: string[]) {
-    if (kakaoPlaceIds.length === 0) return new Set<string>();
+    if (kakaoPlaceIds.length === 0) return [];
 
     const registered = await this.db
       .select({ kakaoPlaceId: restaurants.kakaoPlaceId })
       .from(restaurants)
       .where(inArray(restaurants.kakaoPlaceId, kakaoPlaceIds));
-    return new Set(registered.map(({ kakaoPlaceId }) => kakaoPlaceId));
+    return registered.map(({ kakaoPlaceId }) => kakaoPlaceId);
   }
 }
