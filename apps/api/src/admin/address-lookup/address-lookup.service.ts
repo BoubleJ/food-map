@@ -18,11 +18,8 @@ export class AddressLookupService {
   constructor(private readonly addressSearchService: AddressSearchService) {}
 
   async lookup(places: AddressLookupPlace[]): Promise<AddressLookupOutput> {
-    const results: AddressLookupResult[] = [];
     // 행정안전부 좌표 API 는 짧은 시간에 호출이 몰리면 E0007 을 돌려주므로 순서대로 조회한다
-    for (const place of places) {
-      results.push(await this.lookupPlace(place));
-    }
+    const results = await Array.fromAsync(places, (place) => this.lookupPlace(place));
     return { results };
   }
 
@@ -31,12 +28,10 @@ export class AddressLookupService {
     roadAddress,
     jibunAddress,
   }: AddressLookupPlace): Promise<AddressLookupResult> {
-    const address = roadAddress
-      ? await this.findAddress(roadAddress, "roadAddress")
-      : await this.findAddress(jibunAddress, "jibunAddress");
-    return address
-      ? { kakaoPlaceId, status: "found", address }
-      : { kakaoPlaceId, status: "notFound" };
+    const field = roadAddress ? "roadAddress" : "jibunAddress";
+    const address = await this.findAddress(roadAddress || jibunAddress, field);
+    if (!address) return { kakaoPlaceId, status: "notFound" };
+    return { kakaoPlaceId, status: "found", address };
   }
 
   private async findAddress(
