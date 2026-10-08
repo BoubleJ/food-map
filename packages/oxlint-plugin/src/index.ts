@@ -4,6 +4,7 @@ import { nestFileLocation } from "./rules/nest-file-location.ts";
 import { noExportedFunctionInNestFile } from "./rules/no-exported-function-in-nest-file.ts";
 import { noForeignInternalImport } from "./rules/no-foreign-internal-import.ts";
 import { noNestedTypeLiteral } from "./rules/no-nested-type-literal.ts";
+import { noNullishTernaryConsequent } from "./rules/no-nullish-ternary-consequent.ts";
 import { noRestaurantValueUnion } from "./rules/no-restaurant-value-union.ts";
 import { noTypePrefix } from "./rules/no-type-prefix.ts";
 import { preferObjectParams } from "./rules/prefer-object-params.ts";
@@ -17,6 +18,7 @@ const plugin = definePlugin({
     "no-exported-function-in-nest-file": noExportedFunctionInNestFile,
     "no-foreign-internal-import": noForeignInternalImport,
     "no-nested-type-literal": noNestedTypeLiteral,
+    "no-nullish-ternary-consequent": noNullishTernaryConsequent,
     "no-restaurant-value-union": noRestaurantValueUnion,
     "no-type-prefix": noTypePrefix,
     "prefer-object-params": preferObjectParams,

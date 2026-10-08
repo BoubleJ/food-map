@@ -69,7 +69,8 @@
       }
     ],
     "food-map/no-restaurant-value-union": "error",
-    "food-map/prefer-object-params": "error"
+    "food-map/prefer-object-params": "error",
+    "food-map/no-nullish-ternary-consequent": "error"
   },
   "overrides": [
     {
