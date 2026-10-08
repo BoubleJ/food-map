@@ -4,11 +4,10 @@ import type { RestaurantSearchResult } from "@food-map/shared/admin/restaurant-s
 import { inArray } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { PlaceSearchService } from "@/admin/place-search/place-search.service";
-import type { PlaceCandidate } from "@/admin/types/place-candidate";
+import type { PlaceSearchResult } from "@/admin/types/place-search-result";
 import { restaurants } from "@/database/schema/restaurant";
 
-interface CachedPlaces {
-  places: PlaceCandidate[];
+interface CachedPlaces extends PlaceSearchResult {
   expiresAt: number;
 }
 
@@ -28,7 +27,7 @@ export class RestaurantSearchService {
   ) {}
 
   async search(keyword: string, page: number): Promise<RestaurantSearchResult> {
-    const places = await this.findPlaces(keyword, page);
+    const { places, isTruncated } = await this.findPlaces(keyword, page);
     const pagePlaces = places.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
     const registeredPlaceIds = await this.findRegisteredPlaceIds(
       pagePlaces.map(({ kakaoPlaceId }) => kakaoPlaceId),
@@ -40,20 +39,21 @@ export class RestaurantSearchService {
         isRegistered: registeredPlaceIds.includes(place.kakaoPlaceId),
       })),
       hasNext: places.length > page * PAGE_SIZE,
+      isTruncated,
     };
   }
 
   private async findPlaces(keyword: string, page: number) {
     const cached = this.cache.get(keyword);
     // 1페이지는 새 검색이라 카카오를 다시 호출하고, 2페이지부터는 더 보기라 처음 검색한 결과를 쓴다
-    if (page > 1 && cached && cached.expiresAt > Date.now()) return cached.places;
+    if (page > 1 && cached && cached.expiresAt > Date.now()) return cached;
 
-    const places = await this.placeSearchService.search(keyword);
-    this.saveCache(keyword, places);
-    return places;
+    const result = await this.placeSearchService.search(keyword);
+    this.saveCache(keyword, result);
+    return result;
   }
 
-  private saveCache(keyword: string, places: PlaceCandidate[]) {
+  private saveCache(keyword: string, result: PlaceSearchResult) {
     const now = Date.now();
     for (const [key, { expiresAt }] of this.cache) {
       if (expiresAt <= now) this.cache.delete(key);
@@ -63,7 +63,7 @@ export class RestaurantSearchService {
       const oldestKeyword = this.cache.keys().next().value;
       if (oldestKeyword !== undefined) this.cache.delete(oldestKeyword);
     }
-    this.cache.set(keyword, { places, expiresAt: now + CACHE_TTL_MS });
+    this.cache.set(keyword, { ...result, expiresAt: now + CACHE_TTL_MS });
   }
 
   private async findRegisteredPlaceIds(kakaoPlaceIds: string[]) {

@@ -61,16 +61,19 @@ describe("PlaceSearchService", () => {
   it("카카오 키워드 검색으로 장소 ID, 이름, 카테고리, 주소, 카카오맵 url, 좌표를 돌려준다", async () => {
     get.mockResolvedValue(createKakaoResponse([createKakaoPlace({})]));
 
-    await expect(service.search("수타우동겐")).resolves.toEqual([
-      {
-        kakaoPlaceId: "17131878",
-        name: "수타우동겐 본점",
-        categoryName: "음식점 > 일식 > 우동,소바",
-        roadAddress: "경기 성남시 분당구 야탑로 72",
-        placeUrl: "http://place.map.kakao.com/17131878",
-        coordinate: { latitude: 37.409579, longitude: 127.126824 },
-      },
-    ]);
+    await expect(service.search("수타우동겐")).resolves.toEqual({
+      places: [
+        {
+          kakaoPlaceId: "17131878",
+          name: "수타우동겐 본점",
+          categoryName: "음식점 > 일식 > 우동,소바",
+          roadAddress: "경기 성남시 분당구 야탑로 72",
+          placeUrl: "http://place.map.kakao.com/17131878",
+          coordinate: { latitude: 37.409579, longitude: 127.126824 },
+        },
+      ],
+      isTruncated: false,
+    });
     expect(get).toHaveBeenCalledWith("/v2/local/search/keyword.json", {
       query: { query: "수타우동겐", size: 15, page: 1 },
     });
@@ -84,7 +87,7 @@ describe("PlaceSearchService", () => {
       ]),
     );
 
-    const places = await service.search("고에몬");
+    const { places } = await service.search("고에몬");
 
     expect(places.map(({ kakaoPlaceId }) => kakaoPlaceId)).toEqual(["1", "2"]);
   });
@@ -99,7 +102,7 @@ describe("PlaceSearchService", () => {
       ]),
     );
 
-    const places = await service.search("수타우동겐");
+    const { places } = await service.search("수타우동겐");
 
     expect(places.map(({ kakaoPlaceId }) => kakaoPlaceId)).toEqual(["1", "2"]);
   });
@@ -112,7 +115,7 @@ describe("PlaceSearchService", () => {
       ]),
     );
 
-    const places = await service.search("포장마차");
+    const { places } = await service.search("포장마차");
 
     expect(places.map(({ kakaoPlaceId }) => kakaoPlaceId)).toEqual(["1"]);
   });
@@ -125,7 +128,7 @@ describe("PlaceSearchService", () => {
       }),
     );
 
-    const places = await service.search("브런치빈");
+    const { places } = await service.search("브런치빈");
 
     expect(places.map(({ kakaoPlaceId }) => kakaoPlaceId)).toEqual(["page-1", "page-2", "page-3"]);
     expect(get.mock.calls.map((call) => getQuery(call).page)).toEqual([1, 2, 3]);
@@ -150,7 +153,7 @@ describe("PlaceSearchService", () => {
           }),
     );
 
-    const places = await service.search("브런치빈");
+    const { places, isTruncated } = await service.search("브런치빈");
 
     expect(get.mock.calls.map((call) => getQuery(call).rect)).toEqual([
       undefined,
@@ -165,6 +168,7 @@ describe("PlaceSearchService", () => {
       "124,36,128,39",
       "128,36,132,39",
     ]);
+    expect(isTruncated).toBe(false);
   });
 
   it("나눈 영역도 받을 수 있는 수보다 많으면 그 영역만 다시 4개로 나눈다", async () => {
@@ -174,7 +178,7 @@ describe("PlaceSearchService", () => {
         : createKakaoResponse([createKakaoPlace({ id: rect })]),
     );
 
-    const places = await service.search("브런치빈");
+    const { places } = await service.search("브런치빈");
 
     expect(places.map(({ kakaoPlaceId }) => kakaoPlaceId)).toEqual([
       "124,33,128,36",
@@ -194,7 +198,7 @@ describe("PlaceSearchService", () => {
         : createKakaoResponse([], { totalCount: 57, pageableCount: 45, isEnd: false }),
     );
 
-    const places = await service.search("브런치빈");
+    const { places } = await service.search("브런치빈");
 
     expect(places.filter(({ kakaoPlaceId }) => kakaoPlaceId === "경계")).toHaveLength(1);
     expect(places).toHaveLength(5);
@@ -209,8 +213,9 @@ describe("PlaceSearchService", () => {
       }),
     );
 
-    await service.search("스타벅스");
+    const { isTruncated } = await service.search("스타벅스");
 
+    expect(isTruncated).toBe(true);
     const maxSplitRects = 4 ** 4;
     const splitRequests = 1 + 4 + 4 ** 2 + 4 ** 3;
     expect(get).toHaveBeenCalledTimes(splitRequests + maxSplitRects * 3);

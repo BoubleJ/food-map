@@ -114,6 +114,7 @@ describe("GET /api/admin/restaurant-search", () => {
         },
       ],
       hasNext: false,
+      isTruncated: false,
     });
     expect(kakaoGet).toHaveBeenCalledWith("/v2/local/search/keyword.json", {
       query: { query: "수타우동겐", size: 15, page: 1 },

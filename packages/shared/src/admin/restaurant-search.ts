@@ -24,6 +24,7 @@ const restaurantCandidateSchema = z.object({
 const restaurantSearchOutputSchema = z.object({
   restaurants: z.array(restaurantCandidateSchema),
   hasNext: z.boolean(),
+  isTruncated: z.boolean(),
 });
 
 export type RestaurantCandidate = z.infer<typeof restaurantCandidateSchema>;

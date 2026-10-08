@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { HttpClient, InjectHttpClient, toHttpException } from "@nestjs/http-client";
-import type { PlaceCandidate } from "@/admin/types/place-candidate";
+import type { PlaceSearchResult } from "@/admin/types/place-search-result";
 
 interface KakaoPlaceDocument {
   id: string;
@@ -41,6 +41,11 @@ interface SearchInRectParams extends Omit<KeywordSearchParams, "page"> {
   depth: number;
 }
 
+interface RectSearchResult {
+  documents: KakaoPlaceDocument[];
+  isTruncated: boolean;
+}
+
 export const KAKAO_LOCAL_CLIENT = "kakao-local";
 
 const RESTAURANT_CATEGORY_GROUP_CODES = ["FD6", "CE7"];
@@ -69,11 +74,11 @@ function splitRect({ minX, minY, maxX, maxY }: Rect): Rect[] {
 export class PlaceSearchService {
   constructor(@InjectHttpClient(KAKAO_LOCAL_CLIENT) private readonly kakaoLocal: HttpClient) {}
 
-  async search(keyword: string): Promise<PlaceCandidate[]> {
-    const documents = await this.searchInRect({ keyword, depth: 0 });
+  async search(keyword: string): Promise<PlaceSearchResult> {
+    const { documents, isTruncated } = await this.searchInRect({ keyword, depth: 0 });
     const uniqueDocuments = new Map(documents.map((document) => [document.id, document]));
 
-    return [...uniqueDocuments.values()]
+    const places = [...uniqueDocuments.values()]
       .filter(
         ({ category_group_code, road_address_name }) =>
           RESTAURANT_CATEGORY_GROUP_CODES.includes(category_group_code) && road_address_name !== "",
@@ -86,20 +91,25 @@ export class PlaceSearchService {
         placeUrl: place_url,
         coordinate: { latitude: Number(y), longitude: Number(x) },
       }));
+    return { places, isTruncated };
   }
 
   private async searchInRect({
     keyword,
     rect,
     depth,
-  }: SearchInRectParams): Promise<KakaoPlaceDocument[]> {
+  }: SearchInRectParams): Promise<RectSearchResult> {
     const { meta, documents } = await this.requestKeywordSearch({ keyword, page: 1, rect });
+    const hasUnpageableDocuments = meta.total_count > meta.pageable_count;
 
-    if (meta.total_count > meta.pageable_count && depth < MAX_SPLIT_DEPTH) {
-      const childDocuments = await Array.fromAsync(splitRect(rect ?? KOREA_RECT), (childRect) =>
+    if (hasUnpageableDocuments && depth < MAX_SPLIT_DEPTH) {
+      const childResults = await Array.fromAsync(splitRect(rect ?? KOREA_RECT), (childRect) =>
         this.searchInRect({ keyword, rect: childRect, depth: depth + 1 }),
       );
-      return childDocuments.flat();
+      return {
+        documents: childResults.flatMap((childResult) => childResult.documents),
+        isTruncated: childResults.some((childResult) => childResult.isTruncated),
+      };
     }
 
     const requestNextPages = async (
@@ -111,7 +121,10 @@ export class PlaceSearchService {
       return [...next.documents, ...(await requestNextPages(page + 1, next.meta.is_end))];
     };
 
-    return [...documents, ...(await requestNextPages(2, meta.is_end))];
+    return {
+      documents: [...documents, ...(await requestNextPages(2, meta.is_end))],
+      isTruncated: hasUnpageableDocuments,
+    };
   }
 
   private async requestKeywordSearch({ keyword, page, rect }: KeywordSearchParams) {
