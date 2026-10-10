@@ -9,13 +9,13 @@ const restaurantRegisterItemSchema = z.object({
   placeUrl: z.url(),
   address: lookedUpAddressSchema,
   description: z.string().trim().min(1).max(500).optional(),
-  franchiseName: z.string().trim().min(1).optional(),
+  isVisible: z.boolean(),
 });
 
 const restaurantRegisterInputSchema = z.object({
   common: z.object({
     categories: z.array(z.enum(RESTAURANT_CATEGORIES)).min(1),
-    isVisible: z.boolean(),
+    franchiseName: z.string().trim().min(1).optional(),
   }),
   restaurants: z
     .array(restaurantRegisterItemSchema)

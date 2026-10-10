@@ -13,7 +13,7 @@ export class RestaurantRegisterService {
   constructor(@InjectDrizzle() private readonly db: PostgresJsDatabase) {}
 
   async register({
-    common: { categories, isVisible },
+    common: { categories, franchiseName },
     restaurants: items,
   }: RestaurantRegisterInput): Promise<RestaurantRegisterOutput> {
     const kakaoPlaceIds = items.map(({ kakaoPlaceId }) => kakaoPlaceId);
@@ -29,7 +29,7 @@ export class RestaurantRegisterService {
               placeUrl,
               address: { latitude, longitude, ...address },
               description,
-              franchiseName,
+              isVisible,
             }) => ({
               name,
               categories,

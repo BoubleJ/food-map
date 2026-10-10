@@ -22,12 +22,13 @@ function createRestaurant(kakaoPlaceId: string) {
       latitude: 37.409579,
       longitude: 127.126824,
     },
+    isVisible: true,
   };
 }
 
 function createBody(overrides: object = {}) {
   return {
-    common: { categories: ["japanese"], isVisible: true },
+    common: { categories: ["japanese"] },
     restaurants: [createRestaurant("1")],
     ...overrides,
   };
@@ -117,8 +118,8 @@ describe("POST /api/admin/restaurants", () => {
   });
 
   it.each([
-    ["카테고리가 비어 있으면", createBody({ common: { categories: [], isVisible: true } })],
-    ["없는 카테고리면", createBody({ common: { categories: ["pizza"], isVisible: true } })],
+    ["카테고리가 비어 있으면", createBody({ common: { categories: [] } })],
+    ["없는 카테고리면", createBody({ common: { categories: ["pizza"] } })],
     ["식당이 없으면", createBody({ restaurants: [] })],
     [
       "식당이 10곳을 넘으면",
@@ -132,7 +133,7 @@ describe("POST /api/admin/restaurants", () => {
     ],
     [
       "가맹점 이름이 빈 문자열이면",
-      createBody({ restaurants: [{ ...createRestaurant("1"), franchiseName: " " }] }),
+      createBody({ common: { categories: ["japanese"], franchiseName: " " } }),
     ],
   ])("%s 저장하지 않고 400 으로 응답한다", async (_, body) => {
     await request(app.getHttpServer()).post("/api/admin/restaurants").send(body).expect(400);

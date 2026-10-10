@@ -19,11 +19,15 @@ function createRestaurant(kakaoPlaceId: string) {
       latitude: 37.409579,
       longitude: 127.126824,
     },
+    isVisible: true,
   };
 }
 
-function createInput(restaurants: RestaurantRegisterInput["restaurants"]): RestaurantRegisterInput {
-  return { common: { categories: ["japanese", "udon"], isVisible: true }, restaurants };
+function createInput(
+  restaurants: RestaurantRegisterInput["restaurants"],
+  franchiseName?: string,
+): RestaurantRegisterInput {
+  return { common: { categories: ["japanese", "udon"], franchiseName }, restaurants };
 }
 
 describe("RestaurantRegisterService", () => {
@@ -59,11 +63,14 @@ describe("RestaurantRegisterService", () => {
     service = moduleRef.get(RestaurantRegisterService);
   });
 
-  it("식당마다 공통 입력과 주소 조회 결과를 합쳐 저장하고 등록한 카카오 장소 ID 를 돌려준다", async () => {
-    const input = createInput([
-      { ...createRestaurant("1"), description: "우동 맛집", franchiseName: "수타우동겐" },
-      createRestaurant("2"),
-    ]);
+  it("식당마다 공통 입력, 식당별 입력, 주소 조회 결과를 합쳐 저장하고 등록한 카카오 장소 ID 를 돌려준다", async () => {
+    const input = createInput(
+      [
+        { ...createRestaurant("1"), description: "우동 맛집" },
+        { ...createRestaurant("2"), isVisible: false },
+      ],
+      "수타우동겐",
+    );
 
     await expect(service.register(input)).resolves.toEqual({ registeredPlaceIds: ["1", "2"] });
     expect(insertValues).toHaveBeenCalledWith([
@@ -85,7 +92,8 @@ describe("RestaurantRegisterService", () => {
       expect.objectContaining({
         kakaoPlaceId: "2",
         description: undefined,
-        franchiseName: undefined,
+        franchiseName: "수타우동겐",
+        isVisible: false,
       }),
     ]);
   });
